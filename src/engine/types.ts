@@ -58,3 +58,59 @@ export type SearchHit = {
   pv: string[];
   tieBreak: boolean;
 };
+
+export type Individual = {
+  id: string;
+  genome: Genome;
+  parents: [string, string] | null;
+  generation: number;
+};
+
+export type GameRecord = {
+  id: string;
+  whiteId: string;
+  blackId: string;
+  moves: string[];
+  result: "1-0" | "0-1" | "1/2-1/2";
+  reason: EndReason | "ply-cap";
+  plyCap: boolean;
+};
+
+export type ScoreRecord = {
+  id: string;
+  fitness: number;
+  anchorPoints: number;
+  peerPoints: number;
+  famePoints: number | null;
+};
+
+export type GenerationRecord = {
+  index: number;
+  presetId: string;
+  seed: number;
+  budget: Budget;
+  population: Individual[];
+  games: GameRecord[];
+  scores: ScoreRecord[];
+  bestId: string;
+  nodes: number;
+  elapsedMs: number;
+};
+
+export type HallEntry = {
+  individual: Individual;
+  anchorPoints: number;
+};
+
+export type Run = {
+  schema: 1;
+  appVersion: string;
+  id: string;
+  seed: number;
+  presetId: "darwin";
+  rngState: number;
+  population: Individual[];
+  generations: GenerationRecord[];
+  hallOfFame: HallEntry[];
+  updatedAt: string;
+};

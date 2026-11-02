@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Board } from "@/components/board";
 import { PLAY_BUDGET, createGenome } from "@/engine/presets";
@@ -16,8 +17,8 @@ import {
   toFen,
   uciToMove,
 } from "@/engine/rules";
-import type { GameResult, Move, Position, Promotion } from "@/engine/types";
-import { PRESET_EVENT, loadPlayPreset, type PlayPresetId } from "@/store/preset";
+import type { GameResult, Genome, Move, Position, Promotion } from "@/engine/types";
+import { OPPONENT_EVENT, PRESET_EVENT, loadOpponent, loadSelectedPreset, type SelectedPreset } from "@/store/preset";
 import { requestSearch } from "@/worker/client";
 
 const PROMOTIONS: Array<{ id: Promotion; label: string }> = [
@@ -28,7 +29,8 @@ const PROMOTIONS: Array<{ id: Promotion; label: string }> = [
 ];
 
 export default function PlayPage() {
-  const [preset, setPreset] = useState<PlayPresetId>("classic");
+  const [preset, setPreset] = useState<SelectedPreset>("classic");
+  const [opponent, setOpponent] = useState<Genome | null>(null);
   const [pos, setPos] = useState<Position>(() => startPosition());
   const [history, setHistory] = useState<string[]>(() => [positionKey(startPosition())]);
   const [log, setLog] = useState<Move[]>([]);
@@ -43,12 +45,17 @@ export default function PlayPage() {
   const [gameId, setGameId] = useState(0);
 
   useEffect(() => {
-    const read = () => setPreset(loadPlayPreset());
+    const read = () => {
+      setPreset(loadSelectedPreset());
+      setOpponent(loadOpponent());
+    };
     read();
     window.addEventListener(PRESET_EVENT, read);
+    window.addEventListener(OPPONENT_EVENT, read);
     window.addEventListener("storage", read);
     return () => {
       window.removeEventListener(PRESET_EVENT, read);
+      window.removeEventListener(OPPONENT_EVENT, read);
       window.removeEventListener("storage", read);
     };
   }, []);
@@ -64,14 +71,18 @@ export default function PlayPage() {
     setEnd(null);
     setError(null);
     setInfo(null);
-  }, [preset, gameId]);
+  }, [preset, opponent, gameId]);
 
-  const genome = useMemo(() => createGenome(preset), [preset]);
+  const genome = useMemo(() => {
+    if (opponent) return opponent;
+    if (preset === "classic" || preset === "positional") return createGenome(preset);
+    return null;
+  }, [opponent, preset]);
   const legal = useMemo(() => legalMoves(pos), [pos]);
   const targets = selected === null ? [] : legal.filter((move) => move.from === selected).map((move) => move.to);
 
   useEffect(() => {
-    if (!pending || end) return;
+    if (!pending || end || !genome) return;
     let live = true;
     const job = requestSearch({ fen: toFen(pos), genome, budget: PLAY_BUDGET, seed: 1 });
     job.done
@@ -92,7 +103,7 @@ export default function PlayPage() {
     };
     // applyChoice closes over the position captured when the search started.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pending, gameId]);
+  }, [pending, gameId, genome]);
 
   function applyChoice(move: Move) {
     const next = applyMove(pos, move);
@@ -132,6 +143,19 @@ export default function PlayPage() {
     if (move) applyChoice(move);
   }
 
+  if (!genome) {
+    return (
+      <div className="mx-auto max-w-xl">
+        <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Play</p>
+        <p className="mt-4 text-muted">No best individual yet. Run a generation on Evolve.</p>
+        <Link href="/evolve" className="mt-4 inline-block text-sm opacity-80 hover:opacity-100">
+          Evolve
+        </Link>
+      </div>
+    );
+  }
+
+  const label = opponent ? opponent.id : preset;
   const status = end
     ? end.reason
     : pending
@@ -169,8 +193,8 @@ export default function PlayPage() {
         ) : null}
       </div>
       <aside className="border border-line bg-surface p-4">
-        <p className="text-[11px] tracking-[0.14em] text-faint uppercase">{preset}</p>
-        <h1 className="mt-2 text-2xl font-medium capitalize">{preset}</h1>
+        <p className="text-[11px] tracking-[0.14em] text-faint uppercase">{label}</p>
+        <h1 className="mt-2 text-2xl font-medium capitalize">{label}</h1>
         <p className="mt-6 text-[11px] tracking-[0.14em] text-faint uppercase">Budget</p>
         <p className="mt-2 text-sm text-muted">
           Depth {PLAY_BUDGET.maxDepth}
