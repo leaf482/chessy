@@ -1,0 +1,188 @@
+# UI
+
+## Reference
+
+Borrow the information density of [spacex.com](https://www.spacex.com): black background, hairline dividers, small labels, large numbers, and one primary action with room around it. Do not take SpaceX photography, logos, sentences, or vehicle names.
+
+Chessy's subject is the board and the generation number.
+
+## Tone
+
+- Sentences stay short. Buttons are verbs: `Start evolution`, `Watch game`, `Play best`.
+- Product name, preset names, labels, and body copy are English.
+- Status is literal. Evolution running is `Running`, stopped is `Paused`, and a failure is `Worker error` plus the message.
+- Strength words are the metric names from the algorithm doc: Best fitness, Anchor.
+
+## Tokens
+
+| Token | Value | Use |
+| --- | --- | --- |
+| background | `#000000` | page |
+| surface | `#0a0a0a` | cards, side panel |
+| line | `rgba(255,255,255,0.14)` | dividers, borders |
+| text | `#ffffff` | titles, numbers |
+| muted | `rgba(255,255,255,0.64)` | body |
+| faint | `rgba(255,255,255,0.40)` | labels, inactive |
+| signal | `#9ec1ff` | the single running dot. Not a decorative gradient |
+| board-light | `#efefef` | light square |
+| board-dark | `#161616` | dark square |
+| move | `#d6e4ff` | thin border on the last-move squares |
+
+Type:
+
+- Body and UI: Geist Sans, then a system sans.
+- Large numbers and route labels use Geist Sans with wider tracking. A separate display face is not part of the look.
+
+Labels are 11px, uppercase, tracking 0.14em. Body is 15–16px with line-height 1.5. Hero numbers scale from 64 to 120px with the viewport, at weight 500 or below.
+
+Corners are square. There is no shadow. Separation comes from lines and space.
+
+## Shell
+
+The top bar is 56px, black, with a 1px bottom border.
+
+```text
+CHESSY                 MISSION   PLAY   WATCH   EVOLVE   PRESETS
+```
+
+- The wordmark goes to `/`.
+- The current route is white. The others use muted.
+- The right edge is status text only: `Idle` or `Gen 12 · Running`.
+- The bar stays put while the page scrolls.
+
+A footer appears on the first screen only: build version and a docs link. Board screens have no footer.
+
+## Pages
+
+### Mission `/`
+
+The first screen is the cover of the current run.
+
+```text
+GENERATION
+12
+
+DARWIN
+depth 2 · population 12 · seed 1042
+
+12          7.5         1,240
+GENERATION  ANCHOR      NODES/S
+
+[ Start evolution ]  [ Play best ]
+```
+
+- With no run, Generation reads `00` and the supporting line describes the default preset, Darwin.
+- The primary action is `Start evolution`. While a run is going, it reads `Pause`.
+- `Play best` is enabled only when a best individual exists.
+- Under the hero, show Anchor for the latest six generations as a row of numbers. Phase 1 does not add a chart library.
+
+### Play `/play`
+
+On a wide viewport the board is on the left and the spec panel on the right. On a narrow viewport the spec sits under the board.
+
+Panel order:
+
+1. Opponent name and preset id
+2. Budget: Depth, Nodes
+3. Last search: score, nodes, pv
+4. Game record. One move per line, UCI converted to coordinate notation
+5. Actions are `New game` and `Flip board`
+
+Board:
+
+- Squares are square. Pieces are flat geometric marks. Unicode piece glyphs are an acceptable start. No textures and no wood theme.
+- Files a–h and ranks 1–8 are faint labels.
+- Show the selected square and the legal destinations. No coaching arrows.
+- A human move is two clicks. Promotion opens queen, rook, bishop, and knight beside the board. There is no automatic queen promotion.
+- While the engine thinks, the panel status becomes `Thinking`. The board is not dimmed.
+
+### Watch `/watch`
+
+A player for completed game records.
+
+- Generation picker, that generation's game list, the board, previous move, next move.
+- Autoplay uses one speed: 600ms per move.
+- With no games, show an empty board and `No games in this generation`.
+
+### Evolve `/evolve`
+
+The control room. Controls and the log come before decorative charts.
+
+Top row: preset, seed, budget name.
+
+Two budgets only:
+
+| Name | Depth | Node cap |
+| --- | --- | --- |
+| Rapid | 2 | 2_000 |
+| Standard | 3 | 8_000 |
+
+Below that:
+
+- `Start`, `Pause`, `Step one generation`
+- Progress for this generation, such as `18 / 72 games`. The first generation, with an empty hall, uses 48 as the denominator.
+- A table: rank, first 8 characters of id, fitness, anchor, elite
+
+Selecting a row reveals that genome's five material numbers and its parent ids. The 384 PST values stay collapsed. `Export genome` downloads that row's JSON only.
+
+Secondary actions: `Export run`, `Import run`, `New run`. `New run` asks for confirmation before clearing the current run.
+
+### Presets `/presets`
+
+A card grid. Card contents:
+
+```text
+01
+DARWIN
+Crossover and mutation rewrite evaluation weights each generation.
+
+SEARCH     negamax
+GENOME     material + pst
+EVOLVES    yes
+BUDGET     depth 2 · 2,000 nodes
+
+[ Use preset ]
+```
+
+`Use preset` changes the preset only after confirming a new run when one is already in progress. Frozen presets use the same button. Evolve then shows `This preset does not evolve. Play it on the board.` with a link to Play.
+
+## Responsive behavior
+
+Below 960px, the top links collapse into one `Menu`. Board width is the smaller of viewport width minus 32px and 560px.
+
+Hover raises opacity to 1 and does not recolor the control. The focus ring is a 2px white outline.
+
+Motion is limited to two rules:
+
+- No page-transition animation.
+- The Running dot changes opacity on a 1.2s cycle. With reduced motion enabled, the dot stays lit and still.
+
+## Empty states and errors
+
+| Situation | Screen |
+| --- | --- |
+| No saved run | Mission zeros and the Darwin description |
+| Worker failed to start | `Worker error` in the panel. Board interaction stays; engine moves stop |
+| Invalid JSON | `Schema mismatch` beside Import. The current run stays |
+| Watch at generation 0 | The empty-list sentence |
+
+Errors sit next to the control that caused them. There is no toast stack.
+
+## Access
+
+- Each square is a button named by its coordinate. Example: `e2`, or `e2 white pawn` when occupied.
+- Tab to a square and press Enter to pick it up. Arrow-key movement waits past phase 1.
+- Default contrast is white text on black. Faint labels do not replace body text.
+- Check is also the word `Check` in the panel, not a color change alone.
+
+## Copy
+
+Mission supporting line:
+
+> Self-play under one budget. Evaluations that outscore the anchor carry into the next generation.
+
+Presets header:
+
+> Search paired with an evaluation. Evolution is on for Darwin only.
+
+Those two sentences are the phase-1 prose. As features grow, add spec numbers rather than more sentences.

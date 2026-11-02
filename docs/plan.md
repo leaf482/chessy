@@ -1,0 +1,144 @@
+# Plan
+
+## One line
+
+Chessy is a simulator where a population of chess individuals replaces its evaluation functions through self-play. The screen is a dark control room that leads with specs and numbers. Algorithms are chosen as presets.
+
+## Goals
+
+1. Play legal chess and step back through the game record.
+2. Changing the preset changes the search procedure and the evaluation shape.
+3. The Darwin preset repeats generations and updates the population's evaluation weights.
+4. The user watches the current generation's games, or plays the anchor and the best individual.
+5. A run replays from its seed.
+
+## Out of scope
+
+- A superhuman engine, endgame tablebases, and an opening book.
+- Online play, accounts, and ratings.
+- Bundling Stockfish or another external engine. Search and evaluation live in this repo so the license stays simple.
+- Training on grandmaster games. Self-play is the learning signal.
+- Neural evolution in the first phases. The interface stays open; the implementation waits.
+- An Elo display. Score against the anchor preset is the strength proxy.
+
+## User
+
+One person running an experiment. They pick a preset and watch how the moves change across generations, rather than implementing the algorithm themselves.
+
+They:
+
+- Read a preset and run it.
+- Start evolution, pause it, or step a single generation.
+- Pull an individual and a game record onto the board.
+- Keep the seed and the genome as JSON.
+
+## Product surfaces
+
+| Route | Role |
+| --- | --- |
+| `/` | Current run. Generation, population size, anchor score, selected preset |
+| `/play` | Human versus the selected individual |
+| `/watch` | Replay a game actually played in this generation |
+| `/evolve` | Evolution controls. Budget, seed, generation log |
+| `/presets` | Algorithm catalog |
+
+Lineage is a phase-2 screen. Phase 1 uses parent ids in the generation log.
+
+## Presets
+
+A preset binds search, evaluation shape, the initial genome, and whether evolution may change that genome. Formulas are in [algorithms.md](algorithms.md).
+
+| id | Name | First inclusion | Evolution |
+| --- | --- | --- | --- |
+| `classic` | Classic | Phase 1 | Frozen. Material-only anchor |
+| `positional` | Positional | Phase 1 | Frozen. Hand-authored piece-square tables |
+| `darwin` | Darwin | Phase 1 | On. Evolves the same genome shape as Positional |
+| `horizon` | Horizon | Phase 2 | Frozen. Quiescence and deeper iterative deepening |
+| `surveyor` | Surveyor | Phase 3 | Frozen. Monte Carlo tree search |
+| `synapse` | Synapse | Phase 4 | On. Small neural evaluation |
+
+Classic stays frozen. Every generation plays a set of games against it, so a population that only beats itself still pays for that in the score.
+
+## Phases
+
+### 0. Docs
+
+This directory. When an implementation decision changes, update the matching doc first.
+
+### 1. Board and anchor
+
+A human plays Classic and Positional.
+
+Done when:
+
+- Legal moves, check, checkmate, stalemate, castling, en passant, promotion, the fifty-move rule, and threefold repetition are in place.
+- Perft locks the rules. Starting-position perft(1..3) matches the published node counts.
+- Classic, at a fixed depth, plays the same move from the same position and the same seed.
+- `/`, `/play`, and `/presets` follow the screen structure in the UI doc.
+- Search runs off the UI thread. The board stays operable while a move is computing.
+
+### 2. Evolution loop
+
+A Darwin population produces generations.
+
+Done when:
+
+- A finished generation logs the population, ranking, parents, and score against the anchor.
+- The top two individuals are copied into the next generation with no mutation.
+- The same run seed reproduces the same generation.
+- A paused run resumes.
+- A run exports to JSON and imports back.
+- `/evolve` and `/watch` operate on that state.
+
+### 3. Second search family
+
+Horizon and Surveyor show that a preset chooses a search algorithm, not only a weight set.
+
+Done when:
+
+- Four presets move on the same board and the same telemetry.
+- Each preset shows its node or simulation budget.
+- A human can switch between Darwin's best individual and Horizon.
+
+### 4. Neural genome
+
+Synapse. Only the evaluation becomes a small network. The evolution-operator interface stays the one Darwin uses.
+
+Check before starting:
+
+- A phase-2 generation finishes in seconds to a few tens of seconds.
+- One worker stays inside the budget, or a backend is required.
+
+If a backend is required, add a separate Python service and keep the board and preset UI. Record that decision in a doc at the start of phase 4.
+
+## Phase 1 implementation order
+
+1. Next.js, TypeScript, and Tailwind scaffold
+2. Rules module and perft
+3. Classic search and evaluation
+4. Worker protocol
+5. Board and Play
+6. Shell, Mission, and Presets
+7. Positional piece-square tables
+8. Genome, tournament, and Darwin
+9. Evolve, Watch, and JSON save
+
+Do not build the evolution UI before step 8. If the moves are wrong, the evolution result cannot be read.
+
+## Risks
+
+| Risk | Response |
+| --- | --- |
+| Shallow self-play barely learns | Write that expectation in the docs and the UI. The learning signal is score against the anchor. A test checks that center and material ratios still move at depth 2. |
+| A generation is too slow | Default budget: population 12, ring schedule of 48 or 72 games, depth 2. The screen offers only Rapid and Standard. |
+| The population optimizes only against itself | Fitness includes the Classic anchor score. The best-so-far individual stays in the opponent pool. |
+| Search freezes the UI | Pure rules and search run in the worker. The main thread renders the board and the log. |
+| Scope drifts into engine research | Search improvements outside a phase's done-when arrive only as a new preset. |
+
+## Success
+
+After phase 1, a first-time visitor can read how the presets differ and finish a game against Classic.
+
+After phase 2, that person runs several generations with a fixed seed, sees anchor scores accumulate in the log, and plays the resulting individual.
+
+The bar is a reproducible log and legal moves.
