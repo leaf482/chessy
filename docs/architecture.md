@@ -147,12 +147,12 @@ Requests and responses pair on a one-way job id. In-flight work is cancelled wit
 
 ```ts
 type WorkerRequest =
-  | { kind: "search"; jobId: string; fen: string; genome: Genome; budget: Budget; search: "negamax" | "mcts" }
+  | { kind: "search"; jobId: string; fen: string; genome: Genome; budget: Budget; search: "negamax" | "mcts"; seed: number }
   | { kind: "generation"; jobId: string; run: Run; budget: Budget }
   | { kind: "cancel"; jobId: string };
 
 type WorkerEvent =
-  | { kind: "search-done"; jobId: string; move: string; nodes: number; score: number; pv: string[] }
+  | { kind: "search-done"; jobId: string; move: string; nodes: number; score: number; pv: string[]; tieBreak: boolean }
   | { kind: "generation-progress"; jobId: string; gamesDone: number; gamesTotal: number }
   | { kind: "generation-done"; jobId: string; generation: GenerationRecord; rngState: number }
   | { kind: "error"; jobId: string; message: string };
