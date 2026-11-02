@@ -66,11 +66,26 @@ The default search for phases 1–2.
 
 Play's default budget is depth 4 and 50_000 nodes. Self-play inside a generation is depth 2 and 2_000 nodes. Same function, different budget.
 
-In the Horizon phase, iterative deepening comes first, and quiescence that follows captures and checks replaces the depth-0 return. The genome stays the same.
+## Horizon
+
+Same positional genome. The search is not the phase-1 negamax.
+
+1. Iterative deepening runs depth 1 through `maxDepth`. Killer moves and history scores carry from one depth to the next.
+2. An iteration that stops because the node cap was hit is discarded when a shallower iteration finished. The first iteration is kept even if it is partial, so the search still returns a move.
+3. At depth 0, quiescence replaces the evaluation. It follows captures, including en passant, and checking moves. In check there is no stand-pat score; every evasion is searched. Quiescence stops after 6 plies and returns the evaluation.
+4. Move order is captures by victim value, then two killer moves for that ply, then quiet moves by history. A quiet beta cutoff stores the killer and adds `depth²` to that move's history.
+5. The play budget stays depth 4 and 50_000 nodes. The genome is the positional genome.
 
 ## Surveyor
 
-Phase 3. Expand a tree with UCT. Rollouts draw uniformly among legal moves. The default simulation count is 200.
+UCT Monte Carlo. The genome is not read.
+
+- Exploration constant `C` is `sqrt(2)`.
+- An unvisited child is expanded before a visited sibling is reselected. The root move is the child with the most visits. Equal visits use the seeded RNG and set `tieBreak`.
+- A rollout draws uniformly among legal moves. It stops on a game result. After 80 plies it scores `0.5 + clamp(material, -800, 800) / 2000` from fixed piece values. That score does not read the genome. A finished mate or draw still scores 1, 0, or 0.5. Rollout history starts at the leaf, so earlier repetitions are not counted.
+- The default budget is 200 simulations, with a safety cap of 50_000 nodes.
+- The reported score is `round((whiteRate - 0.5) * 200)`. `+100` means every rollout from that move was a white win. The principal variation follows the most-visited child for at most 8 plies.
+- `nodes` counts positions touched during selection and rollouts.
 
 Evolving the rollout policy is outside this preset. If it is added later, it gets a new preset id.
 

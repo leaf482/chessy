@@ -93,7 +93,13 @@ function engineWorker(): Worker {
   return worker;
 }
 
-export function requestSearch(input: { fen: string; genome: Genome; budget: Budget; seed: number }): {
+export function requestSearch(input: {
+  fen: string;
+  genome: Genome;
+  budget: Budget;
+  seed: number;
+  search: "negamax" | "horizon" | "mcts";
+}): {
   done: Promise<SearchDone>;
   cancel: () => void;
 } {
@@ -101,7 +107,7 @@ export function requestSearch(input: { fen: string; genome: Genome; budget: Budg
   const done = new Promise<SearchDone>((resolve, reject) => {
     pending.set(jobId, { resolve, reject });
   });
-  engineWorker().postMessage({ kind: "search", jobId, search: "negamax", ...input });
+  engineWorker().postMessage({ kind: "search", jobId, ...input });
   return {
     done,
     cancel() {

@@ -83,7 +83,7 @@ On a wide viewport the board is on the left and the spec panel on the right. On 
 Panel order:
 
 1. Opponent name and preset id
-2. Budget: Depth, Nodes
+2. Budget: Depth and Nodes, or the simulation count for Surveyor
 3. Last search: score, nodes, pv
 4. Game record. One move per line, UCI converted to coordinate notation
 5. Actions are `New game` and `Flip board`
@@ -144,7 +144,7 @@ BUDGET     depth 2 · 2,000 nodes
 [ Use preset ]
 ```
 
-`Use preset` changes the preset only after confirming a new run when one is already in progress. Frozen presets use the same button. Evolve then shows `This preset does not evolve. Play it on the board.` with a link to Play.
+`Use preset` stops an in-progress generation only after confirmation. A finished run stays, so Play best remains available. Frozen presets then open Play. Darwin opens Evolve. Evolve shows `This preset does not evolve. Play it on the board.` when the selected preset is not Darwin.
 
 ## Responsive behavior
 

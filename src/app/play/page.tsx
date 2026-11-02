@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Board } from "@/components/board";
-import { PLAY_BUDGET, createGenome } from "@/engine/presets";
+import { PLAY_BUDGET, SURVEYOR_BUDGET, createGenome } from "@/engine/presets";
 import {
   WHITE,
   applyMove,
@@ -75,16 +75,18 @@ export default function PlayPage() {
 
   const genome = useMemo(() => {
     if (opponent) return opponent;
-    if (preset === "classic" || preset === "positional") return createGenome(preset);
+    if (preset === "classic" || preset === "positional" || preset === "horizon" || preset === "surveyor") return createGenome(preset);
     return null;
   }, [opponent, preset]);
+  const searchKind = !opponent && preset === "horizon" ? "horizon" : !opponent && preset === "surveyor" ? "mcts" : "negamax";
+  const budget = !opponent && preset === "surveyor" ? SURVEYOR_BUDGET : PLAY_BUDGET;
   const legal = useMemo(() => legalMoves(pos), [pos]);
   const targets = selected === null ? [] : legal.filter((move) => move.from === selected).map((move) => move.to);
 
   useEffect(() => {
     if (!pending || end || !genome) return;
     let live = true;
-    const job = requestSearch({ fen: toFen(pos), genome, budget: PLAY_BUDGET, seed: 1 });
+    const job = requestSearch({ fen: toFen(pos), genome, budget, seed: 1, search: searchKind });
     job.done
       .then((hit) => {
         if (!live) return;
@@ -103,7 +105,7 @@ export default function PlayPage() {
     };
     // applyChoice closes over the position captured when the search started.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pending, gameId, genome]);
+  }, [pending, gameId, genome, budget, searchKind]);
 
   function applyChoice(move: Move) {
     const next = applyMove(pos, move);
@@ -197,9 +199,9 @@ export default function PlayPage() {
         <h1 className="mt-2 text-2xl font-medium capitalize">{label}</h1>
         <p className="mt-6 text-[11px] tracking-[0.14em] text-faint uppercase">Budget</p>
         <p className="mt-2 text-sm text-muted">
-          Depth {PLAY_BUDGET.maxDepth}
-          <span className="mx-2 text-faint">·</span>
-          Nodes {PLAY_BUDGET.maxNodes.toLocaleString("en-US")}
+          {budget.simulations > 0
+            ? `${budget.simulations.toLocaleString("en-US")} simulations`
+            : `Depth ${budget.maxDepth} · Nodes ${budget.maxNodes.toLocaleString("en-US")}`}
         </p>
         <p className="mt-6 text-[11px] tracking-[0.14em] text-faint uppercase">Status</p>
         <p className="mt-2 text-sm capitalize">{status}</p>

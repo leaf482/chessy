@@ -6,12 +6,12 @@ const OPPONENT_KEY = "chessy.opponent.v1";
 export const PRESET_EVENT = "chessy-preset";
 export const OPPONENT_EVENT = "chessy-opponent";
 
-export type SelectedPreset = "classic" | "positional" | "darwin";
+export type SelectedPreset = "classic" | "positional" | "darwin" | "horizon" | "surveyor";
 
 export function loadSelectedPreset(): SelectedPreset {
   if (typeof window === "undefined") return "classic";
   const value = localStorage.getItem(KEY);
-  if (value === "positional" || value === "darwin") return value;
+  if (value === "positional" || value === "darwin" || value === "horizon" || value === "surveyor") return value;
   return "classic";
 }
 
