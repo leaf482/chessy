@@ -8,7 +8,13 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Documentation only. The app, dependencies, and engine come in the next stage.
+Phase 1 is playable: legal chess, Classic and Positional, and the Mission / Play / Presets shell. Darwin's generation loop is next.
+
+```bash
+npm install
+npm test
+npm run dev
+```
 
 ## Docs
 

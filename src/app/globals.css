@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000000;
+  --color-surface: #0a0a0a;
+  --color-line: rgba(255, 255, 255, 0.14);
+  --color-muted: rgba(255, 255, 255, 0.64);
+  --color-faint: rgba(255, 255, 255, 0.4);
+  --color-signal: #9ec1ff;
+  --color-board-light: #efefef;
+  --color-board-dark: #161616;
+  --color-move: #d6e4ff;
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: #000;
+  color: #fff;
+  min-height: 100%;
+}
+
+button,
+a {
+  border-radius: 0;
+}
+
+::selection {
+  background: #fff;
+  color: #000;
+}
