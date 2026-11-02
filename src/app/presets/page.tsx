@@ -1,11 +1,31 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { CATALOG, isPlayablePreset } from "@/engine/presets";
-import { savePlayPreset } from "@/store/preset";
+import { saveSelectedPreset, type SelectedPreset } from "@/store/preset";
+import { loadRun, saveRun } from "@/store/run";
+import { discardActiveGeneration } from "@/worker/client";
 
 export default function PresetsPage() {
   const router = useRouter();
+  const [pending, setPending] = useState<SelectedPreset | null>(null);
+
+  function apply(id: SelectedPreset) {
+    discardActiveGeneration();
+    saveRun(null);
+    saveSelectedPreset(id);
+    router.push(id === "darwin" ? "/evolve" : "/play");
+  }
+
+  function choose(id: SelectedPreset) {
+    if (loadRun()) {
+      setPending(id);
+      return;
+    }
+    saveSelectedPreset(id);
+    router.push(id === "darwin" ? "/evolve" : "/play");
+  }
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -29,13 +49,13 @@ export default function PresetsPage() {
               <dt className="text-[11px] tracking-[0.14em] text-faint uppercase">Budget</dt>
               <dd>{entry.budget}</dd>
             </dl>
-            {playableId ? (
+            {playableId || entry.id === "darwin" ? (
               <button
                 type="button"
                 className="mt-6 border border-white/30 px-3 py-2 text-sm opacity-80 hover:opacity-100"
                 onClick={() => {
-                  savePlayPreset(playableId);
-                  router.push("/play");
+                  if (entry.id === "darwin") choose("darwin");
+                  else if (playableId) choose(playableId);
                 }}
               >
                 Use preset
@@ -47,6 +67,17 @@ export default function PresetsPage() {
           );
         })}
       </div>
+      {pending ? (
+        <div className="mt-6 flex gap-4 text-sm">
+          <span className="text-muted">Clear the current run?</span>
+          <button type="button" onClick={() => apply(pending)}>
+            Confirm
+          </button>
+          <button type="button" onClick={() => setPending(null)}>
+            Cancel
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

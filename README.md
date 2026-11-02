@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 1 is playable: legal chess, Classic and Positional, and the Mission / Play / Presets shell. Darwin's generation loop is next.
+Phase 2 runs Darwin generations. A finished generation logs the population, ranking, parents, and anchor score. Pause and resume stay on the same job, and the run exports as JSON. Horizon and Surveyor are next.
 
 ```bash
 npm install
@@ -38,3 +38,4 @@ npm run dev
 1. Project scaffold and rules tests
 2. Human games against the Classic preset
 3. The Darwin generation loop and the Evolve screen
+4. Horizon and Surveyor

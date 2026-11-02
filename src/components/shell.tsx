@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { RUN_STATUS_EVENT } from "@/store/run";
 
 const LINKS = [
   { href: "/", label: "Mission" },
@@ -15,6 +16,18 @@ const LINKS = [
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState("Idle");
+  const [running, setRunning] = useState(false);
+
+  useEffect(() => {
+    const onStatus = (event: Event) => {
+      const detail = (event as CustomEvent<{ running: boolean; generation: number }>).detail;
+      setRunning(detail.running);
+      setStatus(detail.running ? `Gen ${detail.generation} · Running` : "Idle");
+    };
+    window.addEventListener(RUN_STATUS_EVENT, onStatus);
+    return () => window.removeEventListener(RUN_STATUS_EVENT, onStatus);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-white">
@@ -30,7 +43,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="flex items-center gap-4">
-          <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Idle</p>
+          <p className="flex items-center gap-2 text-[11px] tracking-[0.14em] text-faint uppercase">
+            {running ? <span className="running-dot h-1.5 w-1.5 bg-signal" /> : null}
+            {status}
+          </p>
           <button
             type="button"
             className="text-[11px] tracking-[0.14em] text-muted uppercase opacity-80 hover:opacity-100 min-[960px]:hidden"

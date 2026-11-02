@@ -29,3 +29,23 @@ a {
   background: #fff;
   color: #000;
 }
+
+.running-dot {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .running-dot {
+    animation: none;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}

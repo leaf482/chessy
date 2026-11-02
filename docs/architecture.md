@@ -122,6 +122,13 @@ type GenerationRecord = {
     famePoints: number | null;
   }[];
   bestId: string;
+  nodes: number;
+  elapsedMs: number;
+};
+
+type HallEntry = {
+  individual: Individual;
+  anchorPoints: number;
 };
 
 type Run = {
@@ -129,17 +136,20 @@ type Run = {
   appVersion: string;
   id: string;
   seed: number;
-  presetId: string;
+  presetId: "darwin";
   rngState: number;
+  population: Individual[];
   generations: GenerationRecord[];
-  hallOfFame: Individual[];
+  hallOfFame: HallEntry[];
   updatedAt: string;
 };
 ```
 
+`GenerationRecord.population` is the population that played. `Run.population` is the population that plays next. `elapsedMs` is wall time and is not part of the seed replay.
+
 If a genome array length disagrees with the preset definition, the run is rejected. Lengths are not silently trimmed.
 
-`hallOfFame` keeps up to 8 individuals with the best anchor scores at the end of a generation. The next generation's opponent pool includes at least one of them.
+`hallOfFame` keeps up to 8 entries with the best anchor scores at the end of a generation. Each entry stores the individual and the anchor score used to drop the lowest. The next generation's opponent pool includes at least one of them when the hall is not empty.
 
 ## Worker protocol
 
@@ -149,18 +159,22 @@ Requests and responses pair on a one-way job id. In-flight work is cancelled wit
 type WorkerRequest =
   | { kind: "search"; jobId: string; fen: string; genome: Genome; budget: Budget; search: "negamax" | "mcts"; seed: number }
   | { kind: "generation"; jobId: string; run: Run; budget: Budget }
+  | { kind: "resume"; jobId: string }
   | { kind: "cancel"; jobId: string };
 
 type WorkerEvent =
   | { kind: "search-done"; jobId: string; move: string; nodes: number; score: number; pv: string[]; tieBreak: boolean }
   | { kind: "generation-progress"; jobId: string; gamesDone: number; gamesTotal: number }
-  | { kind: "generation-done"; jobId: string; generation: GenerationRecord; rngState: number }
+  | { kind: "generation-paused"; jobId: string; gamesDone: number; gamesTotal: number }
+  | { kind: "generation-done"; jobId: string; generation: GenerationRecord; rngState: number; population: Individual[]; hallOfFame: HallEntry[] }
   | { kind: "error"; jobId: string; message: string };
 ```
 
-A generation job updates the population only inside the worker and returns one `GenerationRecord`. The UI does not assemble intermediate genomes.
+A generation job plays one game at a time and yields between games, so cancel and resume are visible. `generation-done` returns the record of the games just played, the next `population`, the updated `hallOfFame`, and the next `rngState`. The UI does not assemble intermediate genomes.
 
-Progress events omit board state. Watch replays completed `games[].moves`. Live relay comes in phase 2, after generations are stable, by streaming the same game record as moves append.
+Pause is in-session. The worker keeps the job until resume, a new generation replaces a paused job, or the page is reloaded. A reload keeps only completed generations in `localStorage`.
+
+Progress events omit board state. Watch replays completed `games[].moves`.
 
 ## Storage
 
@@ -169,7 +183,7 @@ Progress events omit board state. Watch replays completed `games[].moves`. Live 
 - Export writes that same JSON to a file. Import checks `schema: 1`.
 - Preset definitions are not stored. A save stores `presetId` and resolves it through the app's preset table.
 
-A human Play session is not part of `Run`. It is a separate `PlaySession`, outside phase-1 persistence. A refresh may reset the game in progress. The evolution log is what persists.
+A human Play session is not part of `Run`. The selected preset is `chessy.preset.v1`. Play best stores that genome at `chessy.opponent.v1`. Choosing Classic or Positional removes the opponent override. A refresh may reset the game in progress. The evolution log is what persists.
 
 ## Randomness
 

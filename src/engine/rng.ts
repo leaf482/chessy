@@ -1,7 +1,11 @@
 import type { Rng } from "./types";
 
 export function mulberry32(seed: number): Rng {
-  let state = seed >>> 0;
+  return mulberry32FromState(seed);
+}
+
+export function mulberry32FromState(saved: number): Rng {
+  let state = saved >>> 0;
   const next = () => {
     state = (state + 0x6d2b79f5) >>> 0;
     let t = state;
