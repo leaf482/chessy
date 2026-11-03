@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Board } from "@/components/board";
-import { PLAY_BUDGET, SURVEYOR_BUDGET, createGenome } from "@/engine/presets";
+import { createNetworkGenome, isNetworkGenome } from "@/engine/network";
+import { PLAY_BUDGET, SURVEYOR_BUDGET, SYNAPSE_BUDGET, createGenome } from "@/engine/presets";
 import {
   WHITE,
   applyMove,
@@ -17,7 +18,7 @@ import {
   toFen,
   uciToMove,
 } from "@/engine/rules";
-import type { GameResult, Genome, Move, Position, Promotion } from "@/engine/types";
+import type { AnyGenome, GameResult, Move, Position, Promotion } from "@/engine/types";
 import { OPPONENT_EVENT, PRESET_EVENT, loadOpponent, loadSelectedPreset, type SelectedPreset } from "@/store/preset";
 import { requestSearch } from "@/worker/client";
 
@@ -30,7 +31,7 @@ const PROMOTIONS: Array<{ id: Promotion; label: string }> = [
 
 export default function PlayPage() {
   const [preset, setPreset] = useState<SelectedPreset>("classic");
-  const [opponent, setOpponent] = useState<Genome | null>(null);
+  const [opponent, setOpponent] = useState<AnyGenome | null>(null);
   const [pos, setPos] = useState<Position>(() => startPosition());
   const [history, setHistory] = useState<string[]>(() => [positionKey(startPosition())]);
   const [log, setLog] = useState<Move[]>([]);
@@ -75,11 +76,13 @@ export default function PlayPage() {
 
   const genome = useMemo(() => {
     if (opponent) return opponent;
+    if (preset === "synapse") return createNetworkGenome(1);
     if (preset === "classic" || preset === "positional" || preset === "horizon" || preset === "surveyor") return createGenome(preset);
     return null;
   }, [opponent, preset]);
+  const network = (opponent && isNetworkGenome(opponent)) || (!opponent && preset === "synapse");
   const searchKind = !opponent && preset === "horizon" ? "horizon" : !opponent && preset === "surveyor" ? "mcts" : "negamax";
-  const budget = !opponent && preset === "surveyor" ? SURVEYOR_BUDGET : PLAY_BUDGET;
+  const budget = network ? SYNAPSE_BUDGET : !opponent && preset === "surveyor" ? SURVEYOR_BUDGET : PLAY_BUDGET;
   const legal = useMemo(() => legalMoves(pos), [pos]);
   const targets = selected === null ? [] : legal.filter((move) => move.from === selected).map((move) => move.to);
 

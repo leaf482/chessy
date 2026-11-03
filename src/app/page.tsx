@@ -6,26 +6,33 @@ import { useEffect, useState } from "react";
 import { bestIndividual } from "@/engine/evolve";
 import { RAPID_BUDGET } from "@/engine/presets";
 import type { Run } from "@/engine/types";
-import { saveOpponent, saveSelectedPreset } from "@/store/preset";
-import { RUN_EVENT, RUN_STATUS_EVENT, loadRun } from "@/store/run";
+import { PRESET_EVENT, loadSelectedPreset, saveOpponent, saveSelectedPreset, type SelectedPreset } from "@/store/preset";
+import { RUN_EVENT, RUN_STATUS_EVENT, loadRunForPreset } from "@/store/run";
 import { APP_VERSION } from "@/version";
 import { pauseActiveGeneration } from "@/worker/client";
 
 export default function MissionPage() {
   const router = useRouter();
   const [run, setRun] = useState<Run | null>(null);
+  const [preset, setPreset] = useState<SelectedPreset>("classic");
   const [live, setLive] = useState(false);
 
   useEffect(() => {
-    const read = () => setRun(loadRun());
+    const read = () => {
+      const selected = loadSelectedPreset();
+      setPreset(selected);
+      setRun(loadRunForPreset(selected));
+    };
     read();
     const onStatus = (event: Event) => {
       setLive((event as CustomEvent<{ running: boolean }>).detail.running);
     };
+    window.addEventListener(PRESET_EVENT, read);
     window.addEventListener(RUN_EVENT, read);
     window.addEventListener(RUN_STATUS_EVENT, onStatus);
     window.addEventListener("storage", read);
     return () => {
+      window.removeEventListener(PRESET_EVENT, read);
       window.removeEventListener(RUN_EVENT, read);
       window.removeEventListener(RUN_STATUS_EVENT, onStatus);
       window.removeEventListener("storage", read);
@@ -45,7 +52,7 @@ export default function MissionPage() {
     <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-5xl flex-col">
       <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Generation</p>
       <p className="mt-3 text-[80px] leading-none font-medium tracking-tight">{generation}</p>
-      <p className="mt-8 text-[11px] tracking-[0.14em] text-faint uppercase">Darwin</p>
+      <p className="mt-8 text-[11px] tracking-[0.14em] text-faint uppercase">{preset === "synapse" ? "Synapse" : "Darwin"}</p>
       <p className="mt-3 max-w-xl text-muted">
         Self-play under one budget. Evaluations that outscore the anchor carry into the next generation.
       </p>
@@ -71,7 +78,7 @@ export default function MissionPage() {
               pauseActiveGeneration();
               return;
             }
-            saveSelectedPreset("darwin");
+            if (loadSelectedPreset() !== "synapse") saveSelectedPreset("darwin");
             router.push("/evolve");
           }}
         >

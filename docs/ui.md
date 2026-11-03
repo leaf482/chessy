@@ -144,7 +144,7 @@ BUDGET     depth 2 · 2,000 nodes
 [ Use preset ]
 ```
 
-`Use preset` stops an in-progress generation only after confirmation. A finished run stays, so Play best remains available. Frozen presets then open Play. Darwin opens Evolve. Evolve shows `This preset does not evolve. Play it on the board.` when the selected preset is not Darwin.
+`Use preset` stops an in-progress generation only after confirmation. A finished run stays, so Play best remains available. Frozen presets then open Play. Darwin and Synapse open Evolve. Evolve shows `This preset does not evolve. Play it on the board.` when the selected preset is neither of those. A Synapse row shows the weight count, 24,673, instead of the five material numbers.
 
 ## Responsive behavior
 
@@ -183,6 +183,6 @@ Mission supporting line:
 
 Presets header:
 
-> Search paired with an evaluation. Evolution is on for Darwin only.
+> Search paired with an evaluation. Evolution is on for Darwin and Synapse.
 
 Those two sentences are the phase-1 prose. As features grow, add spec numbers rather than more sentences.

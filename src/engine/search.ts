@@ -11,13 +11,13 @@ import {
   pieceType,
   positionKey,
 } from "./rules";
-import type { Budget, Color, Genome, Move, Position, Rng, SearchHit } from "./types";
+import type { AnyGenome, Budget, Color, Move, Position, Rng, SearchHit } from "./types";
 
 const MATE = 100_000;
 
 type Line = { score: number; pv: string[] };
 
-export function search(pos: Position, genome: Genome, budget: Budget, rng: Rng): SearchHit {
+export function search(pos: Position, genome: AnyGenome, budget: Budget, rng: Rng): SearchHit {
   const nodes = { count: 0 };
   const rootMoves = orderMoves(pos, legalMoves(pos));
   if (rootMoves.length === 0) throw new Error("No legal moves");
@@ -49,7 +49,7 @@ function negamax(
   alphaIn: number,
   beta: number,
   ply: number,
-  genome: Genome,
+  genome: AnyGenome,
   budget: Budget,
   nodes: { count: number },
 ): Line {
@@ -104,7 +104,7 @@ type Tables = {
   aborted: { current: boolean };
 };
 
-export function searchHorizon(pos: Position, genome: Genome, budget: Budget, rng: Rng): SearchHit {
+export function searchHorizon(pos: Position, genome: AnyGenome, budget: Budget, rng: Rng): SearchHit {
   const rootMoves = legalMoves(pos);
   if (rootMoves.length === 0) throw new Error("No legal moves");
   const nodes = { count: 0 };
@@ -127,7 +127,7 @@ export function searchHorizon(pos: Position, genome: Genome, budget: Budget, rng
   return { move: chosen.move, nodes: nodes.count, score, pv: chosen.pv, tieBreak };
 }
 
-export function searchSurveyor(pos: Position, _genome: Genome, budget: Budget, rng: Rng): SearchHit {
+export function searchSurveyor(pos: Position, _genome: AnyGenome, budget: Budget, rng: Rng): SearchHit {
   const root: McNode = { move: null, side: pos.side, children: null, visits: 0, white: 0 };
   const nodes = { count: 0 };
   const simulations = budget.simulations > 0 ? budget.simulations : 200;
@@ -161,7 +161,7 @@ export function searchSurveyor(pos: Position, _genome: Genome, budget: Budget, r
 function horizonRoot(
   pos: Position,
   depth: number,
-  genome: Genome,
+  genome: AnyGenome,
   budget: Budget,
   nodes: { count: number },
   tables: Tables,
@@ -193,7 +193,7 @@ function horizonNegamax(
   alphaIn: number,
   beta: number,
   ply: number,
-  genome: Genome,
+  genome: AnyGenome,
   budget: Budget,
   nodes: { count: number },
   tables: Tables,
@@ -241,7 +241,7 @@ function quiescence(
   beta: number,
   ply: number,
   qply: number,
-  genome: Genome,
+  genome: AnyGenome,
   budget: Budget,
   nodes: { count: number },
   tables: Tables,

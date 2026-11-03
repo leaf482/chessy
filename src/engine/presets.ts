@@ -2,6 +2,7 @@ import type { Budget, Genome, Rng } from "./types";
 
 export const PLAY_BUDGET: Budget = { maxDepth: 4, maxNodes: 50_000, simulations: 0 };
 export const SURVEYOR_BUDGET: Budget = { maxDepth: 0, maxNodes: 50_000, simulations: 200 };
+export const SYNAPSE_BUDGET: Budget = { maxDepth: 3, maxNodes: 8_000, simulations: 0 };
 export const RAPID_BUDGET: Budget = { maxDepth: 2, maxNodes: 2_000, simulations: 0 };
 export const STANDARD_BUDGET: Budget = { maxDepth: 3, maxNodes: 8_000, simulations: 0 };
 
@@ -163,7 +164,6 @@ export const CATALOG: CatalogEntry[] = [
     evolves: "yes",
     budget: "depth 3 · 8,000 nodes",
     playable: false,
-    later: "Phase 4",
   },
 ];
 

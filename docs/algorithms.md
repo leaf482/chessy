@@ -91,14 +91,15 @@ Evolving the rollout policy is outside this preset. If it is added later, it get
 
 ## Synapse
 
-Phase 4 design, fixed now and implemented later.
+Schema 2. The evaluation is a small network. Search stays the Classic negamax. Darwin's operators stay the same interface: two elites, tournament size 3, per-locus crossover, Gaussian mutation.
 
-- Input: 12 piece planes of 64 squares, plus one side-to-move input. 12×64+1 = 769.
-- One hidden layer, 32 units, tanh.
-- One output, the score from White's point of view.
-- The genome is those weights and biases flattened into one array.
-- Search is the same negamax as Classic. The evaluation is what changes.
-- The schema splits at `schema: 2` instead of stretching the shared `Genome` arrays.
+- Input: 12 piece planes of 64 squares, plus one side-to-move input. Plane index is `color * 6 + (type - 1)`, with white `0` and black `1`. Side to move is `+1` for white and `-1` for black. 12×64+1 = 769.
+- One hidden layer, 32 units, tanh. The output is linear and already from White's point of view. Negamax still flips that score when the side to move is black.
+- Layout of the 24,673 weights: `w1` (32×769), `b1` (32), `w2` (32), `b2` (1). Biases start at 0. Glorot uniform fills the matrices only, `w1` then `w2`, scale `sqrt(6 / (fanIn + fanOut))`.
+- The forward pass skips empty squares. That is the same sum as a dense multiply.
+- Play uses depth 3 and 8,000 nodes. A depth-2 search with a 2,000-node cap on the start position finishes in tens of milliseconds, so a Rapid generation stays on one worker. Evolution Rapid is depth 2 / 2,000 nodes. Standard is depth 3 / 8,000.
+- Crossover copies each weight from one parent with a coin flip. Mutation probability is 0.08. A hit adds a Gaussian with standard deviation 0.05 and clamps to -2..2. Network weights are not rounded.
+- A new run id is `synapse-{seed}`. The saved slot is `chessy.synapse.v1`, separate from `chessy.run.v1`.
 
 ## Darwin generation
 
@@ -151,6 +152,7 @@ Non-elite children only.
 - Material and terms: add a rounded Gaussian with mean 0 and standard deviation 8.
 - PST: add a rounded Gaussian with mean 0 and standard deviation 4.
 - Clamp material to 50..2000, PST to -80..80, and terms to -200..200.
+- A network locus adds an unrounded Gaussian with standard deviation 0.05 and clamps to -2..2. The coin flip still comes first, so a weight genome never draws the network Gaussian.
 
 Gaussian draws use Box–Muller on two uniform draws from the run RNG. No separate random library.
 

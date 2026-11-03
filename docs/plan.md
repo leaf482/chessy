@@ -104,12 +104,7 @@ Done when:
 
 Synapse. Only the evaluation becomes a small network. The evolution-operator interface stays the one Darwin uses.
 
-Check before starting:
-
-- A phase-2 generation finishes in seconds to a few tens of seconds.
-- One worker stays inside the budget, or a backend is required.
-
-If a backend is required, add a separate Python service and keep the board and preset UI. Record that decision in a doc at the start of phase 4.
+Decision, recorded at the start of the implementation: stay in the one worker. A depth-2 search of the start position with a 2,000-node cap finishes in tens of milliseconds. There is no Python service. Schema 2 is a separate `NetworkGenome`. The weight `Genome` is unchanged.
 
 ## Phase 1 implementation order
 

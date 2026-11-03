@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { createDarwinRun } from "@/engine/evolve";
+import { createDarwinRun, createSynapseRun } from "@/engine/evolve";
+import { isNetworkGenome } from "@/engine/network";
 import { RAPID_BUDGET, STANDARD_BUDGET } from "@/engine/presets";
 import type { Budget, Individual, Run } from "@/engine/types";
 import { loadSelectedPreset, type SelectedPreset } from "@/store/preset";
-import { downloadJson, loadRun, mergeGeneration, publishStatus, saveRun } from "@/store/run";
+import { downloadJson, loadRunForPreset, mergeGeneration, publishStatus, saveRun } from "@/store/run";
 import { parseRun } from "@/engine/evolve";
 import { APP_VERSION } from "@/version";
 import { activeGeneration, discardActiveGeneration, pauseActiveGeneration, requestGeneration, resumeActiveGeneration } from "@/worker/client";
@@ -31,12 +32,15 @@ export default function EvolvePage() {
   const handle = useRef<Handle | null>(null);
   const runRef = useRef<Run | null>(null);
   const epoch = useRef(0);
+  const presetRef = useRef<SelectedPreset>("classic");
   const budgetRef = useRef<Budget>(RAPID_BUDGET);
+  presetRef.current = preset;
   budgetRef.current = budgetName === "Rapid" ? RAPID_BUDGET : STANDARD_BUDGET;
 
   useEffect(() => {
-    setPreset(loadSelectedPreset());
-    const stored = loadRun();
+    const selected = loadSelectedPreset();
+    setPreset(selected);
+    const stored = selected === "darwin" || selected === "synapse" ? loadRunForPreset(selected) : null;
     setRun(stored);
     runRef.current = stored;
     if (stored) setSeed(stored.seed);
@@ -61,7 +65,7 @@ export default function EvolvePage() {
     );
   }
 
-  if (preset !== "darwin") {
+  if (preset !== "darwin" && preset !== "synapse") {
     return (
       <div className="mx-auto max-w-xl">
         <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Evolve</p>
@@ -80,11 +84,11 @@ export default function EvolvePage() {
   function remember(next: Run | null) {
     runRef.current = next;
     setRun(next);
-    saveRun(next);
+    saveRun(next, presetRef.current === "synapse" ? "synapse" : "darwin");
   }
 
   function launch(nextMode: "run" | "step", source?: Run) {
-    const current = source ?? runRef.current ?? createDarwinRun(seed, APP_VERSION);
+    const current = source ?? runRef.current ?? (presetRef.current === "synapse" ? createSynapseRun(seed, APP_VERSION) : createDarwinRun(seed, APP_VERSION));
     if (!runRef.current) remember(current);
     const ticket = epoch.current;
     mode.current = nextMode;
@@ -165,7 +169,7 @@ export default function EvolvePage() {
   return (
     <div className="mx-auto max-w-3xl">
       <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Evolve</p>
-      <h1 className="mt-3 text-4xl font-medium tracking-[0.08em]">DARWIN</h1>
+      <h1 className="mt-3 text-4xl font-medium tracking-[0.08em]">{preset === "synapse" ? "SYNAPSE" : "DARWIN"}</h1>
       <div className="mt-6 flex flex-wrap items-end gap-6 text-sm">
         <label className="text-faint">
           Seed
@@ -239,6 +243,7 @@ export default function EvolvePage() {
               if (!file) return;
               try {
                 const next = parseRun(JSON.parse(await file.text()));
+                if (next.presetId !== presetRef.current) throw new Error("Schema mismatch");
                 abandon();
                 setImportError(null);
                 setSeed(next.seed);
@@ -302,7 +307,11 @@ function GenomeDetail({ individual }: { individual: Individual | undefined }) {
   if (!individual) return null;
   return (
     <div className="mt-4 border border-line p-4 text-sm">
-      <p className="text-muted">Material {individual.genome.material.join(" ")}</p>
+      <p className="text-muted">
+        {isNetworkGenome(individual.genome)
+          ? `Weights ${individual.genome.weights.length.toLocaleString("en-US")}`
+          : `Material ${individual.genome.material.join(" ")}`}
+      </p>
       <p className="mt-2 text-faint">Parents {individual.parents ? individual.parents.join(" ") : "none"}</p>
       <button type="button" className="mt-3 opacity-80 hover:opacity-100" onClick={() => downloadJson(`${individual.genome.id}.json`, individual.genome)}>
         Export genome

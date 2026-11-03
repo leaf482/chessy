@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 3 plays Classic, Positional, Horizon, and Surveyor on the same board. Horizon deepens and searches captures. Surveyor rolls out with UCT. Darwin's best individual stays one preset switch away. Synapse is next.
+Phase 4 plays and evolves Synapse. The evaluation is a 769×32 network. Search and the Darwin operators stay the same. Horizon, Surveyor, and Darwin each keep their own preset.
 
 ```bash
 npm install

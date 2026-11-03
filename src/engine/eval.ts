@@ -1,11 +1,13 @@
+import { networkValue, isNetworkGenome } from "./network";
 import { BISHOP, KING, PAWN, WHITE, pieceColor, pieceType } from "./rules";
-import type { Genome, Position } from "./types";
+import type { AnyGenome, Genome, Position } from "./types";
 
 function flipRank(square: number): number {
   return ((7 - (square >> 3)) << 3) | (square & 7);
 }
 
-export function evaluateWhite(pos: Position, genome: Genome): number {
+export function evaluateWhite(pos: Position, genome: AnyGenome): number {
+  if (isNetworkGenome(genome)) return networkValue(pos, genome.weights);
   let score = 0;
   const counts = [0, 0, 0, 0, 0];
   let whiteBishops = 0;
@@ -48,7 +50,7 @@ export function evaluateWhite(pos: Position, genome: Genome): number {
   return score;
 }
 
-export function evaluateSide(pos: Position, genome: Genome): number {
+export function evaluateSide(pos: Position, genome: AnyGenome): number {
   const white = evaluateWhite(pos, genome);
   return pos.side === "w" ? white : -white;
 }
