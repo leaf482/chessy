@@ -1,6 +1,7 @@
 import type { Budget, Genome, Rng } from "./types";
 
 export const PLAY_BUDGET: Budget = { maxDepth: 4, maxNodes: 50_000, simulations: 0 };
+export const SURVEYOR_BUDGET: Budget = { maxDepth: 0, maxNodes: 50_000, simulations: 200 };
 export const RAPID_BUDGET: Budget = { maxDepth: 2, maxNodes: 2_000, simulations: 0 };
 export const STANDARD_BUDGET: Budget = { maxDepth: 3, maxNodes: 8_000, simulations: 0 };
 
@@ -135,12 +136,11 @@ export const CATALOG: CatalogEntry[] = [
     index: "04",
     name: "Horizon",
     summary: "Iterative deepening and quiescence on the positional evaluation.",
-    search: "negamax",
+    search: "deepening",
     genome: "material + pst",
     evolves: "no",
     budget: "depth 4 · 50,000 nodes",
-    playable: false,
-    later: "Phase 3",
+    playable: true,
   },
   {
     id: "surveyor",
@@ -151,8 +151,7 @@ export const CATALOG: CatalogEntry[] = [
     genome: "none",
     evolves: "no",
     budget: "200 simulations",
-    playable: false,
-    later: "Phase 3",
+    playable: true,
   },
   {
     id: "synapse",
@@ -168,23 +167,25 @@ export const CATALOG: CatalogEntry[] = [
   },
 ];
 
-export function isPlayablePreset(id: string): id is "classic" | "positional" {
-  return id === "classic" || id === "positional";
+export type PlayPresetId = "classic" | "positional" | "horizon" | "surveyor";
+
+export function isPlayablePreset(id: string): id is PlayPresetId {
+  return id === "classic" || id === "positional" || id === "horizon" || id === "surveyor";
 }
 
-export function createGenome(presetId: "classic" | "positional", _rng?: Rng): Genome {
-  if (presetId === "classic") {
+export function createGenome(presetId: PlayPresetId, _rng?: Rng): Genome {
+  if (presetId === "classic" || presetId === "surveyor") {
     return {
-      id: "classic",
-      presetId: "classic",
+      id: presetId,
+      presetId,
       material: [...MATERIAL],
       pst: Array<number>(384).fill(0),
       terms: [0, 0, 0],
     };
   }
   return {
-    id: "positional",
-    presetId: "positional",
+    id: presetId,
+    presetId,
     material: [...MATERIAL],
     pst: POSITIONAL_PST.slice(),
     terms: [30, 0, -20],

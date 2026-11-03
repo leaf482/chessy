@@ -1,7 +1,7 @@
 import { finishGeneration, playNextGame, startGeneration } from "../engine/evolve";
 import { mulberry32 } from "../engine/rng";
 import { moveToUci, parseFen } from "../engine/rules";
-import { search } from "../engine/search";
+import { search, searchHorizon, searchSurveyor } from "../engine/search";
 import type { GenerationJob } from "../engine/evolve";
 import type { WorkerRequest } from "./protocol";
 
@@ -49,8 +49,14 @@ self.onmessage = (event: MessageEvent<WorkerRequest>) => {
   }
   if (message.kind !== "search") return;
   try {
-    if (message.search !== "negamax") throw new Error("This search is not available yet");
-    const hit = search(parseFen(message.fen), message.genome, message.budget, mulberry32(message.seed));
+    const position = parseFen(message.fen);
+    const rng = mulberry32(message.seed);
+    const hit =
+      message.search === "mcts"
+        ? searchSurveyor(position, message.genome, message.budget, rng)
+        : message.search === "horizon"
+          ? searchHorizon(position, message.genome, message.budget, rng)
+          : search(position, message.genome, message.budget, rng);
     self.postMessage({
       kind: "search-done",
       jobId: message.jobId,

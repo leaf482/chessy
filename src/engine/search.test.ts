@@ -3,7 +3,7 @@ import { evaluateWhite } from "./eval";
 import { createGenome } from "./presets";
 import { mulberry32 } from "./rng";
 import { parseFen } from "./rules";
-import { search } from "./search";
+import { search, searchHorizon, searchSurveyor } from "./search";
 
 describe("eval and search", () => {
   it("scores material from white's point of view", () => {
@@ -43,5 +43,38 @@ describe("eval and search", () => {
     const second = search(fen, classic, budget, mulberry32(7));
     expect(first.pv[0]).toBe(second.pv[0]);
     expect(first.score).toBe(second.score);
+  });
+
+  it("keeps horizon off a capture that hangs the queen", () => {
+    const classic = createGenome("classic");
+    const budget = { maxDepth: 1, maxNodes: 5_000, simulations: 0 };
+    const hanging = parseFen("4k3/1r6/8/8/8/1p6/Q7/4K3 w - - 0 1");
+    const plain = search(hanging, classic, budget, mulberry32(1));
+    const horizon = searchHorizon(hanging, classic, budget, mulberry32(1));
+    expect(plain.move.to).toBe(17);
+    expect(horizon.pv[0]).not.toBe("a2b3");
+  });
+
+  it("plays the same horizon move from the same seed", () => {
+    const positional = createGenome("positional");
+    const budget = { maxDepth: 3, maxNodes: 8_000, simulations: 0 };
+    const fen = parseFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    const first = searchHorizon(fen, positional, budget, mulberry32(7));
+    const second = searchHorizon(fen, positional, budget, mulberry32(7));
+    expect(first.pv[0]).toBe(second.pv[0]);
+    expect(first.score).toBe(second.score);
+    expect(first.nodes).toBe(second.nodes);
+  });
+
+  it("takes a free queen with uniform rollouts", () => {
+    const surveyor = createGenome("surveyor");
+    const budget = { maxDepth: 0, maxNodes: 20_000, simulations: 30 };
+    const fen = parseFen("8/8/8/3q4/4P3/8/8/4K2k w - - 0 1");
+    const capture = searchSurveyor(fen, surveyor, budget, mulberry32(3));
+    expect(capture.move.from).toBe(28);
+    expect(capture.move.to).toBe(35);
+    const again = searchSurveyor(fen, surveyor, budget, mulberry32(3));
+    expect(again.pv[0]).toBe(capture.pv[0]);
+    expect(again.nodes).toBe(capture.nodes);
   });
 });

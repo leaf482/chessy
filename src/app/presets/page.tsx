@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CATALOG, isPlayablePreset } from "@/engine/presets";
 import { saveSelectedPreset, type SelectedPreset } from "@/store/preset";
-import { loadRun, saveRun } from "@/store/run";
-import { discardActiveGeneration } from "@/worker/client";
+import { activeGeneration, discardActiveGeneration } from "@/worker/client";
 
 export default function PresetsPage() {
   const router = useRouter();
@@ -13,13 +12,12 @@ export default function PresetsPage() {
 
   function apply(id: SelectedPreset) {
     discardActiveGeneration();
-    saveRun(null);
     saveSelectedPreset(id);
     router.push(id === "darwin" ? "/evolve" : "/play");
   }
 
   function choose(id: SelectedPreset) {
-    if (loadRun()) {
+    if (activeGeneration()) {
       setPending(id);
       return;
     }
@@ -69,7 +67,7 @@ export default function PresetsPage() {
       </div>
       {pending ? (
         <div className="mt-6 flex gap-4 text-sm">
-          <span className="text-muted">Clear the current run?</span>
+          <span className="text-muted">Stop the current generation?</span>
           <button type="button" onClick={() => apply(pending)}>
             Confirm
           </button>

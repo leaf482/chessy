@@ -28,7 +28,7 @@ src/
   engine/
     rules.ts            legal moves and game end
     eval.ts             score from a genome
-    search.ts           negamax, later mcts
+    search.ts           negamax, horizon, mcts
     evolve.ts           selection, crossover, mutation
     presets.ts          preset definitions and initial genomes
     types.ts
@@ -157,7 +157,7 @@ Requests and responses pair on a one-way job id. In-flight work is cancelled wit
 
 ```ts
 type WorkerRequest =
-  | { kind: "search"; jobId: string; fen: string; genome: Genome; budget: Budget; search: "negamax" | "mcts"; seed: number }
+  | { kind: "search"; jobId: string; fen: string; genome: Genome; budget: Budget; search: "negamax" | "horizon" | "mcts"; seed: number }
   | { kind: "generation"; jobId: string; run: Run; budget: Budget }
   | { kind: "resume"; jobId: string }
   | { kind: "cancel"; jobId: string };
@@ -183,7 +183,7 @@ Progress events omit board state. Watch replays completed `games[].moves`.
 - Export writes that same JSON to a file. Import checks `schema: 1`.
 - Preset definitions are not stored. A save stores `presetId` and resolves it through the app's preset table.
 
-A human Play session is not part of `Run`. The selected preset is `chessy.preset.v1`. Play best stores that genome at `chessy.opponent.v1`. Choosing Classic or Positional removes the opponent override. A refresh may reset the game in progress. The evolution log is what persists.
+A human Play session is not part of `Run`. The selected preset is `chessy.preset.v1`. Play best stores that genome at `chessy.opponent.v1` and searches it with negamax. Choosing any preset other than Darwin removes the opponent override and keeps the saved run. An in-progress generation asks before it is stopped. A refresh may reset the game in progress. The evolution log is what persists.
 
 ## Randomness
 
@@ -208,7 +208,7 @@ Vitest. Run `engine/` without a browser.
 | --- | --- |
 | rules | Starting perft(1)=20, perft(2)=400, perft(3)=8902. Castling, en passant, and promotion fixtures |
 | eval | The same genome and FEN yield the same score. On positions that differ only by material, the Classic sign matches the material advantage |
-| search | At depth 1, it plays a free capture. It plays mate in 1 |
+| search | At depth 1, it plays a free capture. It plays mate in 1. Horizon refuses a capture that hangs the queen. Surveyor, from a fixed seed, takes a free queen |
 | evolve | Generation 1 at a fixed seed matches a snapshot. The two elites' genome bytes match their parents |
 | presets | Darwin and Positional `pst` length is 384 |
 
@@ -228,6 +228,6 @@ Telemetry builds `nodes/s` from the worker's `nodes` count and elapsed time.
 
 ## Extension points
 
-- The `search: "mcts"` branch lands in `search.ts` in phase 3. The protocol's `search` field is filled then.
+- `search` is `negamax`, `horizon`, or `mcts`. Horizon and Surveyor are selected by that field. Darwin's best individual stays on `negamax`.
 - A Synapse genome bumps the schema to 2 with a `kind` on `Genome`. Phase-1 JSON does not carry an empty neural field ahead of time.
 - If server compute is required, an adapter accepts the same `WorkerRequest` over HTTP. The UI client swaps that adapter only.

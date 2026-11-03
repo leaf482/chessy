@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 2 runs Darwin generations. A finished generation logs the population, ranking, parents, and anchor score. Pause and resume stay on the same job, and the run exports as JSON. Horizon and Surveyor are next.
+Phase 3 plays Classic, Positional, Horizon, and Surveyor on the same board. Horizon deepens and searches captures. Surveyor rolls out with UCT. Darwin's best individual stays one preset switch away. Synapse is next.
 
 ```bash
 npm install
@@ -39,3 +39,4 @@ npm run dev
 2. Human games against the Classic preset
 3. The Darwin generation loop and the Evolve screen
 4. Horizon and Surveyor
+5. Synapse
