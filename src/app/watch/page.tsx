@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Board } from "@/components/board";
 import { applyMove, startPosition, uciToMove } from "@/engine/rules";
 import type { GameRecord, Run } from "@/engine/types";
-import { RUN_EVENT, loadRun } from "@/store/run";
+import { PRESET_EVENT, loadSelectedPreset } from "@/store/preset";
+import { RUN_EVENT, loadRunForPreset } from "@/store/run";
 
 export default function WatchPage() {
   const [ready, setReady] = useState(false);
@@ -15,13 +16,15 @@ export default function WatchPage() {
   const [playing, setPlaying] = useState(false);
 
   useEffect(() => {
-    const read = () => setRun(loadRun());
+    const read = () => setRun(loadRunForPreset(loadSelectedPreset()));
     read();
     setReady(true);
     window.addEventListener(RUN_EVENT, read);
+    window.addEventListener(PRESET_EVENT, read);
     window.addEventListener("storage", read);
     return () => {
       window.removeEventListener(RUN_EVENT, read);
+      window.removeEventListener(PRESET_EVENT, read);
       window.removeEventListener("storage", read);
     };
   }, []);

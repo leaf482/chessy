@@ -1,8 +1,10 @@
 import { parseRun } from "../engine/evolve";
+import { NETWORK_LENGTH, isNetworkGenome } from "../engine/network";
 import type { GenerationDone } from "../worker/protocol";
-import type { Genome, Run } from "../engine/types";
+import type { AnyGenome, Run } from "../engine/types";
 
 const KEY = "chessy.run.v1";
+const SYNAPSE_KEY = "chessy.synapse.v1";
 export const RUN_EVENT = "chessy-run";
 export const RUN_STATUS_EVENT = "chessy-run-status";
 
@@ -17,19 +19,43 @@ export function loadRun(): Run | null {
   }
 }
 
-export function saveRun(run: Run | null): void {
-  if (run) localStorage.setItem(KEY, JSON.stringify(run));
-  else localStorage.removeItem(KEY);
+export function loadSynapseRun(): Run | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(SYNAPSE_KEY);
+  if (!raw) return null;
+  try {
+    const run = parseRun(JSON.parse(raw));
+    return run.presetId === "synapse" ? run : null;
+  } catch {
+    return null;
+  }
+}
+
+export function loadRunForPreset(preset: string): Run | null {
+  return preset === "synapse" ? loadSynapseRun() : loadRun();
+}
+
+export function saveRun(run: Run | null, slot?: "darwin" | "synapse"): void {
+  const which = slot ?? (run?.presetId === "synapse" ? "synapse" : "darwin");
+  const key = which === "synapse" ? SYNAPSE_KEY : KEY;
+  if (run) {
+    try {
+      localStorage.setItem(key, JSON.stringify(run));
+    } catch {
+      // A full Synapse population is large. Keep the in-memory run if the browser refuses the write.
+    }
+  } else localStorage.removeItem(key);
   window.dispatchEvent(new Event(RUN_EVENT));
 }
 
 export function mergeGeneration(run: Run, result: GenerationDone): Run {
+  const archived = run.presetId === "synapse" ? run.generations.map(thinNetworkGeneration) : run.generations;
   return {
     ...run,
     rngState: result.rngState,
     population: result.population,
     hallOfFame: result.hallOfFame,
-    generations: [...run.generations, result.generation],
+    generations: [...archived, result.generation],
     updatedAt: new Date().toISOString(),
   };
 }
@@ -48,11 +74,26 @@ export function downloadJson(filename: string, value: unknown): void {
   URL.revokeObjectURL(url);
 }
 
-export function parseOpponent(value: unknown): Genome {
+function thinNetworkGeneration(generation: Run["generations"][number]): Run["generations"][number] {
+  return {
+    ...generation,
+    population: generation.population.map((individual) => {
+      if (!isNetworkGenome(individual.genome) || individual.genome.weights.length === 0) return individual;
+      return { ...individual, genome: { ...individual.genome, weights: [] } };
+    }),
+  };
+}
+
+export function parseOpponent(value: unknown): AnyGenome {
   if (!value || typeof value !== "object") throw new Error("Schema mismatch");
-  const genome = value as Genome;
+  if (isNetworkGenome(value as AnyGenome)) {
+    const weights = (value as { weights?: unknown }).weights;
+    if (!Array.isArray(weights) || weights.length !== NETWORK_LENGTH) throw new Error("Schema mismatch");
+    return value as AnyGenome;
+  }
+  const genome = value as { material?: unknown; pst?: unknown };
   if (!Array.isArray(genome.material) || genome.material.length !== 5 || !Array.isArray(genome.pst) || genome.pst.length !== 384) {
     throw new Error("Schema mismatch");
   }
-  return genome;
+  return value as AnyGenome;
 }

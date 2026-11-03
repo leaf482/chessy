@@ -1,4 +1,4 @@
-import type { Budget, Genome, Run } from "../engine/types";
+import type { AnyGenome, Budget, Run } from "../engine/types";
 import type { GenerationDone, SearchDone, WorkerEvent } from "./protocol";
 
 type Waiter = {
@@ -95,7 +95,7 @@ function engineWorker(): Worker {
 
 export function requestSearch(input: {
   fen: string;
-  genome: Genome;
+  genome: AnyGenome;
   budget: Budget;
   seed: number;
   search: "negamax" | "horizon" | "mcts";

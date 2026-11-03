@@ -1,11 +1,11 @@
-import type { Budget, Genome, HallEntry, Individual, Run } from "../engine/types";
+import type { AnyGenome, Budget, HallEntry, Individual, Run } from "../engine/types";
 
 export type WorkerRequest =
   | {
       kind: "search";
       jobId: string;
       fen: string;
-      genome: Genome;
+      genome: AnyGenome;
       budget: Budget;
       search: "negamax" | "horizon" | "mcts";
       seed: number;

@@ -1,3 +1,4 @@
+import { glorot, isNetworkGenome } from "./network";
 import { createGenome } from "./presets";
 import { mulberry32, mulberry32FromState } from "./rng";
 import { applyMove, gameResult, moveToUci, positionKey, startPosition } from "./rules";
@@ -5,6 +6,7 @@ import { search } from "./search";
 import type {
   Budget,
   GameRecord,
+  AnyGenome,
   Genome,
   HallEntry,
   Individual,
@@ -16,7 +18,7 @@ import type {
 const POPULATION = 12;
 const DEFAULT_PLIES = 80;
 
-type Seat = { id: string; genome: Genome };
+type Seat = { id: string; genome: AnyGenome };
 type Bucket = "anchor" | "peer" | "fame";
 type Pairing = { white: Seat; black: Seat; bucket: Bucket };
 type Acc = { anchor: number; anchorN: number; peer: number; peerN: number; fame: number; fameN: number };
@@ -59,6 +61,28 @@ export function createDarwinRun(seed: number, appVersion: string, now = new Date
     id: `run-${seed}`,
     seed,
     presetId: "darwin",
+    rngState: rng.state(),
+    population,
+    generations: [],
+    hallOfFame: [],
+    updatedAt: now,
+  };
+}
+
+export function createSynapseRun(seed: number, appVersion: string, now = new Date().toISOString()): Run {
+  const rng = mulberry32(seed);
+  const population = Array.from({ length: POPULATION }, (_, slot) => ({
+    id: `ind-0-${pad(slot)}`,
+    genome: { kind: "network" as const, id: `gene-0-${pad(slot)}`, presetId: "synapse" as const, weights: glorot(rng) },
+    parents: null,
+    generation: 0,
+  }));
+  return {
+    schema: 2,
+    appVersion,
+    id: `synapse-${seed}`,
+    seed,
+    presetId: "synapse",
     rngState: rng.state(),
     population,
     generations: [],
@@ -133,7 +157,7 @@ export function finishGeneration(job: GenerationJob, now = Date.now()) {
   }
   const generation = {
     index: nextGeneration,
-    presetId: "darwin",
+    presetId: job.run.presetId,
     seed: job.run.seed,
     budget: job.budget,
     population: job.played.map(cloneIndividual),
@@ -156,10 +180,12 @@ export function scheduledGameCount(hallSize: number): number {
 }
 
 export function parseRun(value: unknown): Run {
-  if (!isRecord(value) || value.schema !== 1 || value.presetId !== "darwin") throw new Error("Schema mismatch");
-  if (!Array.isArray(value.population) || value.population.length !== POPULATION) throw new Error("Schema mismatch");
+  if (!isRecord(value) || !Array.isArray(value.population) || value.population.length !== POPULATION) throw new Error("Schema mismatch");
+  const synapse = value.schema === 2 && value.presetId === "synapse";
+  const darwin = value.schema === 1 && value.presetId === "darwin";
+  if (!synapse && !darwin) throw new Error("Schema mismatch");
   for (const individual of value.population) {
-    if (!validIndividual(individual)) throw new Error("Schema mismatch");
+    if (!validIndividual(individual, synapse)) throw new Error("Schema mismatch");
   }
   if (!Array.isArray(value.generations) || !Array.isArray(value.hallOfFame)) throw new Error("Schema mismatch");
   return value as Run;
@@ -296,7 +322,16 @@ function tournament(pool: Individual[], scores: ScoreRecord[], rng: Rng): Indivi
   return best!;
 }
 
-function crossover(a: Genome, b: Genome, rng: Rng, id: string): Genome {
+function crossover(a: AnyGenome, b: AnyGenome, rng: Rng, id: string): AnyGenome {
+  if (isNetworkGenome(a) && isNetworkGenome(b)) {
+    return {
+      kind: "network",
+      id,
+      presetId: "synapse",
+      weights: a.weights.map((gene, index) => (rng.next() < 0.5 ? gene : b.weights[index])),
+    };
+  }
+  if (isNetworkGenome(a) || isNetworkGenome(b)) throw new Error("Schema mismatch");
   return {
     id,
     presetId: "darwin",
@@ -306,7 +341,11 @@ function crossover(a: Genome, b: Genome, rng: Rng, id: string): Genome {
   };
 }
 
-function mutate(genome: Genome, rng: Rng): void {
+function mutate(genome: AnyGenome, rng: Rng): void {
+  if (isNetworkGenome(genome)) {
+    genome.weights = genome.weights.map((gene) => (rng.next() < 0.08 ? clamp(gene + gaussian(rng) * 0.05, -2, 2) : gene));
+    return;
+  }
   genome.material = genome.material.map((gene) =>
     rng.next() < 0.08 ? clamp(Math.round(gene + gaussian(rng) * 8), 50, 2000) : gene,
   ) as Genome["material"];
@@ -356,12 +395,18 @@ function cloneIndividual(individual: Individual): Individual {
   return {
     ...individual,
     parents: individual.parents ? [individual.parents[0], individual.parents[1]] : null,
-    genome: {
-      ...individual.genome,
-      material: [...individual.genome.material] as Genome["material"],
-      pst: [...individual.genome.pst],
-      terms: [...individual.genome.terms],
-    },
+    genome: cloneGenome(individual.genome),
+  };
+}
+
+function cloneGenome(genome: AnyGenome): AnyGenome {
+  if (isNetworkGenome(genome)) return { kind: "network", id: genome.id, presetId: "synapse", weights: genome.weights.slice() };
+  return {
+    id: genome.id,
+    presetId: genome.presetId,
+    material: [...genome.material] as Genome["material"],
+    pst: [...genome.pst],
+    terms: [...genome.terms],
   };
 }
 
@@ -373,8 +418,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function validIndividual(value: unknown): boolean {
+function validIndividual(value: unknown, synapse: boolean): boolean {
   if (!isRecord(value) || !isRecord(value.genome)) return false;
   const genome = value.genome;
+  if (synapse) return genome.kind === "network" && Array.isArray(genome.weights) && genome.weights.length === 769 * 32 + 32 + 32 + 1;
   return Array.isArray(genome.material) && genome.material.length === 5 && Array.isArray(genome.pst) && genome.pst.length === 384;
 }

@@ -39,6 +39,15 @@ export type Genome = {
   terms: number[];
 };
 
+export type NetworkGenome = {
+  kind: "network";
+  id: string;
+  presetId: "synapse";
+  weights: number[];
+};
+
+export type AnyGenome = Genome | NetworkGenome;
+
 export type Budget = {
   maxDepth: number;
   maxNodes: number;
@@ -61,7 +70,7 @@ export type SearchHit = {
 
 export type Individual = {
   id: string;
-  genome: Genome;
+  genome: AnyGenome;
   parents: [string, string] | null;
   generation: number;
 };
@@ -103,11 +112,11 @@ export type HallEntry = {
 };
 
 export type Run = {
-  schema: 1;
+  schema: 1 | 2;
   appVersion: string;
   id: string;
   seed: number;
-  presetId: "darwin";
+  presetId: "darwin" | "synapse";
   rngState: number;
   population: Individual[];
   generations: GenerationRecord[];

@@ -179,11 +179,12 @@ Progress events omit board state. Watch replays completed `games[].moves`.
 ## Storage
 
 - Runtime state is one in-memory `Run`.
-- At the end of each generation, serialize it to `localStorage` key `chessy.run.v1`.
-- Export writes that same JSON to a file. Import checks `schema: 1`.
+- At the end of each generation, serialize a Darwin run to `localStorage` key `chessy.run.v1` and a Synapse run to `chessy.synapse.v1`.
+- A Synapse generation keeps the 24,673 weights on the current population, the hall of fame, and the newest generation. Older generation records keep the games, scores, and genome id, with an empty weight list. That keeps one run from growing by about 5 MB per generation.
+- Export writes that same JSON to a file. Import checks `schema: 1` with preset `darwin`, or `schema: 2` with preset `synapse`, and rejects a file whose preset does not match the open screen.
 - Preset definitions are not stored. A save stores `presetId` and resolves it through the app's preset table.
 
-A human Play session is not part of `Run`. The selected preset is `chessy.preset.v1`. Play best stores that genome at `chessy.opponent.v1` and searches it with negamax. Choosing any preset other than Darwin removes the opponent override and keeps the saved run. An in-progress generation asks before it is stopped. A refresh may reset the game in progress. The evolution log is what persists.
+A human Play session is not part of `Run`. The selected preset is `chessy.preset.v1`. Play best stores that genome at `chessy.opponent.v1` and searches it with negamax. Darwin keeps a weight opponent. Synapse keeps a network opponent. Classic, Positional, Horizon, and Surveyor clear the override. The other run slot stays. An in-progress generation asks before it is stopped. A refresh may reset the game in progress. The evolution log is what persists.
 
 ## Randomness
 
@@ -229,5 +230,5 @@ Telemetry builds `nodes/s` from the worker's `nodes` count and elapsed time.
 ## Extension points
 
 - `search` is `negamax`, `horizon`, or `mcts`. Horizon and Surveyor are selected by that field. Darwin's best individual stays on `negamax`.
-- A Synapse genome bumps the schema to 2 with a `kind` on `Genome`. Phase-1 JSON does not carry an empty neural field ahead of time.
-- If server compute is required, an adapter accepts the same `WorkerRequest` over HTTP. The UI client swaps that adapter only.
+- Synapse is schema 2. `NetworkGenome` has `kind: "network"` and a flat `weights` array. The shared weight `Genome` has no `kind` and no neural field. Both run in the same worker. The sparse forward pass is the performance strategy. There is no Python service.
+- If server compute is required later, an adapter accepts the same `WorkerRequest` over HTTP. The UI client swaps that adapter only.
