@@ -50,6 +50,7 @@ src/
 | `eval` | Integer score from a genome and a position, white's point of view | Search, randomness |
 | `search` | Choose a move inside a budget. Return nodes visited | Changing a genome |
 | `evolve` | One generation's match and the next population | Screen, storage |
+| `lineage` | Parent chain for one individual. Follows `parents[0]` | Changing a genome |
 | `presets` | Immutable settings over the modules above | Runtime state |
 | `store` | Run state and persistence | Chess rules |
 

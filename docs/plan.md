@@ -42,7 +42,7 @@ They:
 | `/evolve` | Evolution controls. Budget, seed, generation log |
 | `/presets` | Algorithm catalog |
 
-Lineage is a phase-2 screen. Phase 1 uses parent ids in the generation log.
+Lineage is the phase-5 screen. Earlier phases keep parent ids in the generation log.
 
 ## Presets
 
@@ -105,6 +105,17 @@ Done when:
 Synapse. Only the evaluation becomes a small network. The evolution-operator interface stays the one Darwin uses.
 
 Decision, recorded at the start of the implementation: stay in the one worker. A depth-2 search of the start position with a 2,000-node cap finishes in tens of milliseconds. There is no Python service. Schema 2 is a separate `NetworkGenome`. The weight `Genome` is unchanged.
+
+### 5. Lineage
+
+Parent ids become a screen. The chain follows `parents[0]`. The other parent stays on the row and can be selected.
+
+Done when:
+
+- `/lineage` reads the selected preset's run. Synapse uses its own slot. Every other preset uses the Darwin run.
+- An elite shows one parent id, and that id is the previous individual.
+- A second parent is one click away.
+- A run with no finished generation lists the initial population and shows `none` for parents.
 
 ## Phase 1 implementation order
 

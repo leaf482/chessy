@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/", label: "Mission" },
   { href: "/play", label: "Play" },
   { href: "/watch", label: "Watch" },
+  { href: "/lineage", label: "Lineage" },
   { href: "/evolve", label: "Evolve" },
   { href: "/presets", label: "Presets" },
 ];

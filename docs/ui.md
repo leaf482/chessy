@@ -42,7 +42,7 @@ Corners are square. There is no shadow. Separation comes from lines and space.
 The top bar is 56px, black, with a 1px bottom border.
 
 ```text
-CHESSY                 MISSION   PLAY   WATCH   EVOLVE   PRESETS
+CHESSY                 MISSION   PLAY   WATCH   LINEAGE   EVOLVE   PRESETS
 ```
 
 - The wordmark goes to `/`.
@@ -103,6 +103,16 @@ A player for completed game records.
 - Generation picker, that generation's game list, the board, previous move, next move.
 - Autoplay uses one speed: 600ms per move.
 - With no games, show an empty board and `No games in this generation`.
+
+### Lineage `/lineage`
+
+The parent chain of one individual.
+
+- The run follows the selected preset, the same way Watch does.
+- `Played` is the latest generation. `Next` is the population that has not played yet.
+- The chain follows the first parent back to a founder. Each row shows the generation, individual id, genome id, anchor score, and parent ids.
+- An elite has one parent id. A child has two. Either id selects that individual.
+- With no saved run, the screen says `No lineage yet.`
 
 ### Evolve `/evolve`
 
