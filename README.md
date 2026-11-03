@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 4 plays and evolves Synapse. The evaluation is a 769×32 network. Search and the Darwin operators stay the same. Horizon, Surveyor, and Darwin each keep their own preset.
+Phase 5 reads parent ids on the Lineage screen. The chain follows the first parent back to a founder. Synapse and Darwin each keep their own run.
 
 ```bash
 npm install
@@ -40,3 +40,4 @@ npm run dev
 3. The Darwin generation loop and the Evolve screen
 4. Horizon and Surveyor
 5. Synapse
+6. Lineage
