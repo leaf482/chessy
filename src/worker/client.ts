@@ -98,7 +98,7 @@ export function requestSearch(input: {
   genome: AnyGenome;
   budget: Budget;
   seed: number;
-  search: "negamax" | "horizon" | "mcts";
+  search: "negamax" | "horizon" | "mcts" | "pilot";
 }): {
   done: Promise<SearchDone>;
   cancel: () => void;

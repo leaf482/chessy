@@ -7,12 +7,12 @@ const OPPONENT_KEY = "chessy.opponent.v1";
 export const PRESET_EVENT = "chessy-preset";
 export const OPPONENT_EVENT = "chessy-opponent";
 
-export type SelectedPreset = "classic" | "positional" | "darwin" | "horizon" | "surveyor" | "synapse";
+export type SelectedPreset = "classic" | "positional" | "darwin" | "horizon" | "surveyor" | "synapse" | "pilot";
 
 export function loadSelectedPreset(): SelectedPreset {
   if (typeof window === "undefined") return "classic";
   const value = localStorage.getItem(KEY);
-  if (value === "positional" || value === "darwin" || value === "horizon" || value === "surveyor" || value === "synapse") return value;
+  if (value === "positional" || value === "darwin" || value === "horizon" || value === "surveyor" || value === "synapse" || value === "pilot") return value;
   return "classic";
 }
 
@@ -20,7 +20,8 @@ export function saveSelectedPreset(id: SelectedPreset): void {
   localStorage.setItem(KEY, id);
   const opponent = loadOpponent();
   const network = opponent ? isNetworkGenome(opponent) : false;
-  const keep = (id === "synapse" && network) || (id === "darwin" && opponent !== null && !network);
+  const pilot = opponent !== null && !network && opponent.presetId === "pilot";
+  const keep = (id === "synapse" && network) || (id === "pilot" && pilot) || (id === "darwin" && opponent !== null && !network && !pilot);
   if (!keep) localStorage.removeItem(OPPONENT_KEY);
   window.dispatchEvent(new Event(PRESET_EVENT));
   window.dispatchEvent(new Event(OPPONENT_EVENT));

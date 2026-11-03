@@ -3,6 +3,9 @@ import type { Budget, Genome, Rng } from "./types";
 export const PLAY_BUDGET: Budget = { maxDepth: 4, maxNodes: 50_000, simulations: 0 };
 export const SURVEYOR_BUDGET: Budget = { maxDepth: 0, maxNodes: 50_000, simulations: 200 };
 export const SYNAPSE_BUDGET: Budget = { maxDepth: 3, maxNodes: 8_000, simulations: 0 };
+export const PILOT_PLAY: Budget = { maxDepth: 0, maxNodes: 50_000, simulations: 80 };
+export const PILOT_RAPID: Budget = { maxDepth: 0, maxNodes: 20_000, simulations: 8 };
+export const PILOT_STANDARD: Budget = { maxDepth: 0, maxNodes: 40_000, simulations: 24 };
 export const RAPID_BUDGET: Budget = { maxDepth: 2, maxNodes: 2_000, simulations: 0 };
 export const STANDARD_BUDGET: Budget = { maxDepth: 3, maxNodes: 8_000, simulations: 0 };
 
@@ -165,12 +168,28 @@ export const CATALOG: CatalogEntry[] = [
     budget: "depth 3 · 8,000 nodes",
     playable: false,
   },
+  {
+    id: "pilot",
+    index: "07",
+    name: "Pilot",
+    summary: "Monte Carlo rollouts follow an evolvable move prior.",
+    search: "mcts",
+    genome: "material + pst",
+    evolves: "yes",
+    budget: "80 simulations",
+    playable: false,
+  },
 ];
 
 export type PlayPresetId = "classic" | "positional" | "horizon" | "surveyor";
 
 export function isPlayablePreset(id: string): id is PlayPresetId {
   return id === "classic" || id === "positional" || id === "horizon" || id === "surveyor";
+}
+
+export function createPilotPrior(): Genome {
+  const base = createGenome("positional");
+  return { ...base, id: "pilot", presetId: "pilot" };
 }
 
 export function createGenome(presetId: PlayPresetId, _rng?: Rng): Genome {

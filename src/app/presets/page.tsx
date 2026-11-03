@@ -13,7 +13,7 @@ export default function PresetsPage() {
   function apply(id: SelectedPreset) {
     discardActiveGeneration();
     saveSelectedPreset(id);
-    router.push(id === "darwin" || id === "synapse" ? "/evolve" : "/play");
+    router.push(evolves(id) ? "/evolve" : "/play");
   }
 
   function choose(id: SelectedPreset) {
@@ -22,13 +22,13 @@ export default function PresetsPage() {
       return;
     }
     saveSelectedPreset(id);
-    router.push(id === "darwin" || id === "synapse" ? "/evolve" : "/play");
+    router.push(evolves(id) ? "/evolve" : "/play");
   }
 
   return (
     <div className="mx-auto max-w-5xl">
       <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Presets</p>
-      <p className="mt-4 max-w-xl text-muted">Search paired with an evaluation. Evolution is on for Darwin and Synapse.</p>
+      <p className="mt-4 max-w-xl text-muted">Search paired with an evaluation. Evolution is on for Darwin, Synapse, and Pilot.</p>
       <div className="mt-10 grid gap-px bg-line sm:grid-cols-2">
         {CATALOG.map((entry) => {
           const playableId = isPlayablePreset(entry.id) ? entry.id : null;
@@ -47,12 +47,12 @@ export default function PresetsPage() {
               <dt className="text-[11px] tracking-[0.14em] text-faint uppercase">Budget</dt>
               <dd>{entry.budget}</dd>
             </dl>
-            {playableId || entry.id === "darwin" || entry.id === "synapse" ? (
+            {playableId || evolves(entry.id) ? (
               <button
                 type="button"
                 className="mt-6 border border-white/30 px-3 py-2 text-sm opacity-80 hover:opacity-100"
                 onClick={() => {
-                  if (entry.id === "darwin" || entry.id === "synapse") choose(entry.id);
+                  if (evolves(entry.id)) choose(entry.id as SelectedPreset);
                   else if (playableId) choose(playableId);
                 }}
               >
@@ -78,4 +78,8 @@ export default function PresetsPage() {
       ) : null}
     </div>
   );
+}
+
+function evolves(id: string): boolean {
+  return id === "darwin" || id === "synapse" || id === "pilot";
 }
