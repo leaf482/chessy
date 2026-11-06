@@ -191,7 +191,7 @@ Errors sit next to the control that caused them. There is no toast stack.
 ## Access
 
 - Each square is a button named by its coordinate. Example: `e2`, or `e2 white pawn` when occupied.
-- Tab to a square and press Enter to pick it up. Arrow-key movement waits past phase 1.
+- Tab to a square and press Enter to pick it up. Arrow keys move focus to the neighboring square in the direction on screen. A flipped board reverses rank and file. The edge square keeps focus. Enter is the same action as a click.
 - Default contrast is white text on black. Faint labels do not replace body text.
 - Check is also the word `Check` in the panel, not a color change alone.
 
