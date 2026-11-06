@@ -150,7 +150,7 @@ type Run = {
 
 If a genome array length disagrees with the preset definition, the run is rejected. Lengths are not silently trimmed.
 
-`hallOfFame` keeps up to 8 entries with the best anchor scores at the end of a generation. Each entry stores the individual and the anchor score used to drop the lowest. The next generation's opponent pool includes at least one of them when the hall is not empty.
+`hallOfFame` keeps up to 8 entries with the best anchor scores at the end of a generation. Each entry stores the individual and the anchor score used to drop the lowest. The next generation's opponent pool includes at least one of them when the hall is not empty. `/hall` renders that array without sorting it again.
 
 ## Worker protocol
 

@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 6 adds Pilot. Rollouts follow an evolvable move prior. Surveyor stays uniform, and Pilot keeps its own run.
+Phase 7 shows the hall of fame. The list is the best-so-far opponent pool, highest anchor first. `Play` opens that genome on the board.
 
 ```bash
 npm install
@@ -42,3 +42,4 @@ npm run dev
 5. Synapse
 6. Lineage
 7. Pilot
+8. Hall

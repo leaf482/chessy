@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/play", label: "Play" },
   { href: "/watch", label: "Watch" },
   { href: "/lineage", label: "Lineage" },
+  { href: "/hall", label: "Hall" },
   { href: "/evolve", label: "Evolve" },
   { href: "/presets", label: "Presets" },
 ];

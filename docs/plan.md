@@ -129,6 +129,17 @@ Done when:
 - The run is stored apart from Darwin and Synapse.
 - Play shows the simulation budget.
 
+### 7. Hall
+
+The hall of fame is the opponent pool. It becomes a screen.
+
+Done when:
+
+- `/hall` reads the selected preset's run. Synapse and Pilot use their own slots. Every other preset uses the Darwin run.
+- Rows follow the stored order, highest anchor first.
+- `Play` on a row opens that genome on the board and leaves the other runs in place.
+- An empty hall says `No hall yet.`
+
 ## Phase 1 implementation order
 
 1. Next.js, TypeScript, and Tailwind scaffold
