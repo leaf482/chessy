@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 7 shows the hall of fame. The list is the best-so-far opponent pool, highest anchor first. `Play` opens that genome on the board.
+Phase 8 moves the board cursor with the arrow keys. Enter on the focused square is the same as a click. A flipped board reverses the direction.
 
 ```bash
 npm install
@@ -43,3 +43,4 @@ npm run dev
 6. Lineage
 7. Pilot
 8. Hall
+9. Keyboard board

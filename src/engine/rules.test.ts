@@ -5,6 +5,8 @@ import {
   legalMoves,
   moveToUci,
   parseFen,
+  parseSquare,
+  stepSquare,
   perft,
   positionKey,
   startPosition,
@@ -78,5 +80,15 @@ describe("rules", () => {
 
     const key = positionKey(startPosition());
     expect(gameResult(startPosition(), [key, key, key])?.reason).toBe("threefold");
+  });
+
+  it("steps one square in the direction on screen", () => {
+    expect(stepSquare(parseSquare("e2"), "ArrowUp", "w")).toBe(parseSquare("e3"));
+    expect(stepSquare(parseSquare("e2"), "ArrowRight", "w")).toBe(parseSquare("f2"));
+    expect(stepSquare(parseSquare("e2"), "ArrowUp", "b")).toBe(parseSquare("e1"));
+    expect(stepSquare(parseSquare("d4"), "ArrowLeft", "b")).toBe(parseSquare("e4"));
+    expect(stepSquare(parseSquare("a1"), "ArrowLeft", "w")).toBe(parseSquare("a1"));
+    expect(stepSquare(parseSquare("h8"), "ArrowUp", "w")).toBe(parseSquare("h8"));
+    expect(stepSquare(parseSquare("e2"), "Enter", "w")).toBeNull();
   });
 });
