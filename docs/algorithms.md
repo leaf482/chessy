@@ -170,7 +170,7 @@ Gaussian draws use Box–Muller on two uniform draws from the run RNG. No separa
 
 After a generation, insert the individual with the highest `anchorPoints`. If that genome id is already present, replace the entry only when the new anchor score is higher. Cap the hall at 8, dropping the lowest anchor scores first.
 
-The extra opponent next generation is one hall member chosen by the seed. The first generation, with an empty hall, skips those games.
+The extra opponent next generation is one hall member chosen by the seed. The first generation, with an empty hall, skips those games. `/hall` shows this list in the stored order.
 
 ## Metrics on screen
 

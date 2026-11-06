@@ -42,7 +42,7 @@ Corners are square. There is no shadow. Separation comes from lines and space.
 The top bar is 56px, black, with a 1px bottom border.
 
 ```text
-CHESSY                 MISSION   PLAY   WATCH   LINEAGE   EVOLVE   PRESETS
+CHESSY                 MISSION   PLAY   WATCH   LINEAGE   HALL   EVOLVE   PRESETS
 ```
 
 - The wordmark goes to `/`.
@@ -113,6 +113,16 @@ The parent chain of one individual.
 - The chain follows the first parent back to a founder. Each row shows the generation, individual id, genome id, anchor score, and parent ids.
 - An elite has one parent id. A child has two. Either id selects that individual.
 - With no saved run, the screen says `No lineage yet.`
+
+### Hall `/hall`
+
+The best-so-far opponent pool for the selected preset's run.
+
+- Order is the stored hall order: highest anchor first, then id.
+- Each row shows rank, individual id, anchor score, and generation.
+- The selected row shows the genome id and either the five material numbers or the weight count.
+- `Play` stores that genome as the opponent and opens Play. The preset stays put.
+- With no run, or an empty hall, the screen says `No hall yet.`
 
 ### Evolve `/evolve`
 
