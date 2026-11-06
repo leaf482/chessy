@@ -116,7 +116,7 @@ export type Run = {
   appVersion: string;
   id: string;
   seed: number;
-  presetId: "darwin" | "synapse";
+  presetId: "darwin" | "synapse" | "pilot";
   rngState: number;
   population: Individual[];
   generations: GenerationRecord[];

@@ -5,6 +5,7 @@ import type { AnyGenome, Run } from "../engine/types";
 
 const KEY = "chessy.run.v1";
 const SYNAPSE_KEY = "chessy.synapse.v1";
+const PILOT_KEY = "chessy.pilot.v1";
 export const RUN_EVENT = "chessy-run";
 export const RUN_STATUS_EVENT = "chessy-run-status";
 
@@ -31,13 +32,27 @@ export function loadSynapseRun(): Run | null {
   }
 }
 
-export function loadRunForPreset(preset: string): Run | null {
-  return preset === "synapse" ? loadSynapseRun() : loadRun();
+export function loadPilotRun(): Run | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem(PILOT_KEY);
+  if (!raw) return null;
+  try {
+    const run = parseRun(JSON.parse(raw));
+    return run.presetId === "pilot" ? run : null;
+  } catch {
+    return null;
+  }
 }
 
-export function saveRun(run: Run | null, slot?: "darwin" | "synapse"): void {
-  const which = slot ?? (run?.presetId === "synapse" ? "synapse" : "darwin");
-  const key = which === "synapse" ? SYNAPSE_KEY : KEY;
+export function loadRunForPreset(preset: string): Run | null {
+  if (preset === "synapse") return loadSynapseRun();
+  if (preset === "pilot") return loadPilotRun();
+  return loadRun();
+}
+
+export function saveRun(run: Run | null, slot?: "darwin" | "synapse" | "pilot"): void {
+  const which = slot ?? (run?.presetId === "synapse" ? "synapse" : run?.presetId === "pilot" ? "pilot" : "darwin");
+  const key = which === "synapse" ? SYNAPSE_KEY : which === "pilot" ? PILOT_KEY : KEY;
   if (run) {
     try {
       localStorage.setItem(key, JSON.stringify(run));

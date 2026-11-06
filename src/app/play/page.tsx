@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Board } from "@/components/board";
 import { createNetworkGenome, isNetworkGenome } from "@/engine/network";
-import { PLAY_BUDGET, SURVEYOR_BUDGET, SYNAPSE_BUDGET, createGenome } from "@/engine/presets";
+import { PILOT_PLAY, PLAY_BUDGET, SURVEYOR_BUDGET, SYNAPSE_BUDGET, createGenome, createPilotPrior } from "@/engine/presets";
 import {
   WHITE,
   applyMove,
@@ -77,12 +77,14 @@ export default function PlayPage() {
   const genome = useMemo(() => {
     if (opponent) return opponent;
     if (preset === "synapse") return createNetworkGenome(1);
+    if (preset === "pilot") return createPilotPrior();
     if (preset === "classic" || preset === "positional" || preset === "horizon" || preset === "surveyor") return createGenome(preset);
     return null;
   }, [opponent, preset]);
   const network = (opponent && isNetworkGenome(opponent)) || (!opponent && preset === "synapse");
-  const searchKind = !opponent && preset === "horizon" ? "horizon" : !opponent && preset === "surveyor" ? "mcts" : "negamax";
-  const budget = network ? SYNAPSE_BUDGET : !opponent && preset === "surveyor" ? SURVEYOR_BUDGET : PLAY_BUDGET;
+  const pilot = (opponent && !isNetworkGenome(opponent) && opponent.presetId === "pilot") || (!opponent && preset === "pilot");
+  const searchKind = !opponent && preset === "horizon" ? "horizon" : !opponent && preset === "surveyor" ? "mcts" : pilot ? "pilot" : "negamax";
+  const budget = network ? SYNAPSE_BUDGET : pilot ? PILOT_PLAY : !opponent && preset === "surveyor" ? SURVEYOR_BUDGET : PLAY_BUDGET;
   const legal = useMemo(() => legalMoves(pos), [pos]);
   const targets = selected === null ? [] : legal.filter((move) => move.from === selected).map((move) => move.to);
 

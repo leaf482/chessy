@@ -1,4 +1,5 @@
 import { evaluateSide } from "./eval";
+import { isNetworkGenome } from "./network";
 import {
   PAWN,
   WHITE,
@@ -11,7 +12,7 @@ import {
   pieceType,
   positionKey,
 } from "./rules";
-import type { AnyGenome, Budget, Color, Move, Position, Rng, SearchHit } from "./types";
+import type { AnyGenome, Budget, Color, Genome, Move, Position, Rng, SearchHit } from "./types";
 
 const MATE = 100_000;
 
@@ -127,13 +128,31 @@ export function searchHorizon(pos: Position, genome: AnyGenome, budget: Budget, 
   return { move: chosen.move, nodes: nodes.count, score, pv: chosen.pv, tieBreak };
 }
 
+const POLICY_TEMPERATURE = 100;
+
+type RolloutPick = (pos: Position, moves: Move[], rng: Rng) => Move;
+
 export function searchSurveyor(pos: Position, _genome: AnyGenome, budget: Budget, rng: Rng): SearchHit {
+  return searchMcts(pos, budget, rng, (cursor, moves, roll) => moves[roll.nextInt(moves.length)]);
+}
+
+export function searchPilot(pos: Position, genome: AnyGenome, budget: Budget, rng: Rng): SearchHit {
+  return searchMcts(pos, budget, rng, (cursor, moves, roll) => samplePolicy(cursor, moves, genome, roll));
+}
+
+export function policyMove(pos: Position, genome: AnyGenome, rng: Rng): Move {
+  const moves = legalMoves(pos);
+  if (moves.length === 0) throw new Error("No legal moves");
+  return samplePolicy(pos, moves, genome, rng);
+}
+
+function searchMcts(pos: Position, budget: Budget, rng: Rng, pick: RolloutPick): SearchHit {
   const root: McNode = { move: null, side: pos.side, children: null, visits: 0, white: 0 };
   const nodes = { count: 0 };
   const simulations = budget.simulations > 0 ? budget.simulations : 200;
   for (let index = 0; index < simulations; index += 1) {
     if (budget.maxNodes > 0 && nodes.count >= budget.maxNodes) break;
-    simulate(root, pos, rng, nodes);
+    simulate(root, pos, rng, nodes, pick);
   }
   const children = root.children ?? [];
   if (children.length === 0 || !children[0].move) throw new Error("No legal moves");
@@ -342,7 +361,7 @@ type McNode = {
   white: number;
 };
 
-function simulate(node: McNode, pos: Position, rng: Rng, nodes: { count: number }): void {
+function simulate(node: McNode, pos: Position, rng: Rng, nodes: { count: number }, pick: RolloutPick): void {
   const path: McNode[] = [node];
   let cursor = pos;
   let current = node;
@@ -373,7 +392,7 @@ function simulate(node: McNode, pos: Position, rng: Rng, nodes: { count: number 
   cursor = applyMove(cursor, child.move as Move);
   path.push(child);
   nodes.count += 1;
-  backup(path, rollout(cursor, rng, nodes));
+  backup(path, rollout(cursor, rng, nodes, pick));
 }
 
 function selectUct(node: McNode): McNode {
@@ -392,18 +411,55 @@ function selectUct(node: McNode): McNode {
   return best;
 }
 
-function rollout(pos: Position, rng: Rng, nodes: { count: number }): number {
+function rollout(pos: Position, rng: Rng, nodes: { count: number }, pick: RolloutPick): number {
   let cursor = pos;
   const history = [positionKey(cursor)];
   for (let ply = 0; ply < ROLLOUT_PLIES; ply += 1) {
     const end = gameResult(cursor, history);
     if (end) return whitePoints(end.result);
     const moves = legalMoves(cursor);
-    cursor = applyMove(cursor, moves[rng.nextInt(moves.length)]);
+    cursor = applyMove(cursor, pick(cursor, moves, rng));
     history.push(positionKey(cursor));
     nodes.count += 1;
   }
   return materialRate(cursor);
+}
+
+function samplePolicy(pos: Position, moves: Move[], genome: AnyGenome, rng: Rng): Move {
+  if (isNetworkGenome(genome)) return moves[rng.nextInt(moves.length)];
+  if (moves.length === 1) {
+    rng.next();
+    return moves[0];
+  }
+  let max = -Infinity;
+  const priors = moves.map((move) => {
+    const prior = movePrior(pos, move, genome);
+    if (prior > max) max = prior;
+    return prior;
+  });
+  const weights = priors.map((prior) => Math.exp((prior - max) / POLICY_TEMPERATURE));
+  let total = 0;
+  for (const weight of weights) total += weight;
+  let draw = rng.next() * total;
+  for (let index = 0; index < moves.length; index += 1) {
+    draw -= weights[index];
+    if (draw <= 0) return moves[index];
+  }
+  return moves[moves.length - 1];
+}
+
+function movePrior(pos: Position, move: Move, genome: Genome): number {
+  const piece = pos.board[move.from];
+  const type = pieceType(piece);
+  const color = pieceColor(piece);
+  const from = color === WHITE ? move.from : ((7 - (move.from >> 3)) << 3) | (move.from & 7);
+  const to = color === WHITE ? move.to : ((7 - (move.to >> 3)) << 3) | (move.to & 7);
+  let score = (genome.pst[(type - 1) * 64 + to] ?? 0) - (genome.pst[(type - 1) * 64 + from] ?? 0);
+  if (isCapture(pos, move)) {
+    const victim = pos.board[move.to] === 0 ? PAWN : pieceType(pos.board[move.to]);
+    score += genome.material[victim - 1] ?? 0;
+  }
+  return score;
 }
 
 function materialRate(pos: Position): number {

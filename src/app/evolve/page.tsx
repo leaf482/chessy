@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { createDarwinRun, createSynapseRun } from "@/engine/evolve";
+import { createDarwinRun, createPilotRun, createSynapseRun } from "@/engine/evolve";
 import { isNetworkGenome } from "@/engine/network";
-import { RAPID_BUDGET, STANDARD_BUDGET } from "@/engine/presets";
+import { PILOT_RAPID, PILOT_STANDARD, RAPID_BUDGET, STANDARD_BUDGET } from "@/engine/presets";
 import type { Budget, Individual, Run } from "@/engine/types";
 import { loadSelectedPreset, type SelectedPreset } from "@/store/preset";
 import { downloadJson, loadRunForPreset, mergeGeneration, publishStatus, saveRun } from "@/store/run";
@@ -35,12 +35,12 @@ export default function EvolvePage() {
   const presetRef = useRef<SelectedPreset>("classic");
   const budgetRef = useRef<Budget>(RAPID_BUDGET);
   presetRef.current = preset;
-  budgetRef.current = budgetName === "Rapid" ? RAPID_BUDGET : STANDARD_BUDGET;
+  budgetRef.current = evolveBudget(preset, budgetName);
 
   useEffect(() => {
     const selected = loadSelectedPreset();
     setPreset(selected);
-    const stored = selected === "darwin" || selected === "synapse" ? loadRunForPreset(selected) : null;
+    const stored = selected === "darwin" || selected === "synapse" || selected === "pilot" ? loadRunForPreset(selected) : null;
     setRun(stored);
     runRef.current = stored;
     if (stored) setSeed(stored.seed);
@@ -65,7 +65,7 @@ export default function EvolvePage() {
     );
   }
 
-  if (preset !== "darwin" && preset !== "synapse") {
+  if (preset !== "darwin" && preset !== "synapse" && preset !== "pilot") {
     return (
       <div className="mx-auto max-w-xl">
         <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Evolve</p>
@@ -84,11 +84,11 @@ export default function EvolvePage() {
   function remember(next: Run | null) {
     runRef.current = next;
     setRun(next);
-    saveRun(next, presetRef.current === "synapse" ? "synapse" : "darwin");
+    saveRun(next, slotFor(presetRef.current));
   }
 
   function launch(nextMode: "run" | "step", source?: Run) {
-    const current = source ?? runRef.current ?? (presetRef.current === "synapse" ? createSynapseRun(seed, APP_VERSION) : createDarwinRun(seed, APP_VERSION));
+    const current = source ?? runRef.current ?? freshRun(presetRef.current, seed);
     if (!runRef.current) remember(current);
     const ticket = epoch.current;
     mode.current = nextMode;
@@ -169,7 +169,7 @@ export default function EvolvePage() {
   return (
     <div className="mx-auto max-w-3xl">
       <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Evolve</p>
-      <h1 className="mt-3 text-4xl font-medium tracking-[0.08em]">{preset === "synapse" ? "SYNAPSE" : "DARWIN"}</h1>
+      <h1 className="mt-3 text-4xl font-medium tracking-[0.08em]">{preset === "synapse" ? "SYNAPSE" : preset === "pilot" ? "PILOT" : "DARWIN"}</h1>
       <div className="mt-6 flex flex-wrap items-end gap-6 text-sm">
         <label className="text-faint">
           Seed
@@ -182,12 +182,14 @@ export default function EvolvePage() {
           />
         </label>
         <p className="text-muted">
-          {budgetName} · depth {budget.maxDepth} · {budget.maxNodes.toLocaleString("en-US")} nodes
+          {budget.simulations > 0
+            ? `${budgetName} · ${budget.simulations} simulations`
+            : `${budgetName} · depth ${budget.maxDepth} · ${budget.maxNodes.toLocaleString("en-US")} nodes`}
         </p>
       </div>
       <div className="mt-6 grid grid-cols-2 border border-line text-sm">
-        <BudgetButton name="Rapid" budget={RAPID_BUDGET} selected={budgetName === "Rapid"} onSelect={() => setBudgetName("Rapid")} />
-        <BudgetButton name="Standard" budget={STANDARD_BUDGET} selected={budgetName === "Standard"} onSelect={() => setBudgetName("Standard")} />
+        <BudgetButton name="Rapid" budget={evolveBudget(preset, "Rapid")} selected={budgetName === "Rapid"} onSelect={() => setBudgetName("Rapid")} />
+        <BudgetButton name="Standard" budget={evolveBudget(preset, "Standard")} selected={budgetName === "Standard"} onSelect={() => setBudgetName("Standard")} />
       </div>
       <div className="mt-6 flex flex-wrap gap-4 text-sm">
         <button type="button" className="opacity-80 hover:opacity-100" onClick={() => (running ? pause() : start("run"))}>
@@ -297,10 +299,27 @@ function BudgetButton({
     <button type="button" className={`px-4 py-3 text-left ${selected ? "text-white" : "text-faint"}`} onClick={onSelect}>
       <span className="block text-[11px] tracking-[0.14em] uppercase">{name}</span>
       <span className="mt-1 block text-sm">
-        Depth {budget.maxDepth} · {budget.maxNodes.toLocaleString("en-US")}
+        {budget.simulations > 0 ? `${budget.simulations} simulations` : `Depth ${budget.maxDepth} · ${budget.maxNodes.toLocaleString("en-US")}`}
       </span>
     </button>
   );
+}
+
+function evolveBudget(preset: SelectedPreset, name: BudgetName): Budget {
+  if (preset === "pilot") return name === "Rapid" ? PILOT_RAPID : PILOT_STANDARD;
+  return name === "Rapid" ? RAPID_BUDGET : STANDARD_BUDGET;
+}
+
+function slotFor(preset: SelectedPreset): "darwin" | "synapse" | "pilot" {
+  if (preset === "synapse") return "synapse";
+  if (preset === "pilot") return "pilot";
+  return "darwin";
+}
+
+function freshRun(preset: SelectedPreset, seed: number): Run {
+  if (preset === "synapse") return createSynapseRun(seed, APP_VERSION);
+  if (preset === "pilot") return createPilotRun(seed, APP_VERSION);
+  return createDarwinRun(seed, APP_VERSION);
 }
 
 function GenomeDetail({ individual }: { individual: Individual | undefined }) {

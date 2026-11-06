@@ -2,7 +2,7 @@ import { glorot, isNetworkGenome } from "./network";
 import { createGenome } from "./presets";
 import { mulberry32, mulberry32FromState } from "./rng";
 import { applyMove, gameResult, moveToUci, positionKey, startPosition } from "./rules";
-import { search } from "./search";
+import { search, searchPilot } from "./search";
 import type {
   Budget,
   GameRecord,
@@ -83,6 +83,33 @@ export function createSynapseRun(seed: number, appVersion: string, now = new Dat
     id: `synapse-${seed}`,
     seed,
     presetId: "synapse",
+    rngState: rng.state(),
+    population,
+    generations: [],
+    hallOfFame: [],
+    updatedAt: now,
+  };
+}
+
+export function createPilotRun(seed: number, appVersion: string, now = new Date().toISOString()): Run {
+  const rng = mulberry32(seed);
+  const base = createGenome("positional");
+  const population = Array.from({ length: POPULATION }, (_, slot) => {
+    const genome: Genome = {
+      id: `gene-0-${pad(slot)}`,
+      presetId: "pilot",
+      material: [...base.material] as Genome["material"],
+      pst: base.pst.map((gene) => clamp(Math.round(gene + gaussian(rng) * 2), -80, 80)),
+      terms: [...base.terms],
+    };
+    return { id: `ind-0-${pad(slot)}`, genome, parents: null, generation: 0 } satisfies Individual;
+  });
+  return {
+    schema: 1,
+    appVersion,
+    id: `pilot-${seed}`,
+    seed,
+    presetId: "pilot",
     rngState: rng.state(),
     population,
     generations: [],
@@ -182,7 +209,7 @@ export function scheduledGameCount(hallSize: number): number {
 export function parseRun(value: unknown): Run {
   if (!isRecord(value) || !Array.isArray(value.population) || value.population.length !== POPULATION) throw new Error("Schema mismatch");
   const synapse = value.schema === 2 && value.presetId === "synapse";
-  const darwin = value.schema === 1 && value.presetId === "darwin";
+  const darwin = value.schema === 1 && (value.presetId === "darwin" || value.presetId === "pilot");
   if (!synapse && !darwin) throw new Error("Schema mismatch");
   for (const individual of value.population) {
     if (!validIndividual(individual, synapse)) throw new Error("Schema mismatch");
@@ -237,7 +264,10 @@ function playGame(job: GenerationJob, pairing: Pairing): { record: GameRecord; n
       };
     }
     const genome = pos.side === "w" ? pairing.white.genome : pairing.black.genome;
-    const hit = search(pos, genome, job.budget, job.rng);
+    const hit =
+      job.run.presetId === "pilot" && !isNetworkGenome(genome) && genome.presetId === "pilot"
+        ? searchPilot(pos, genome, job.budget, job.rng)
+        : search(pos, genome, job.run.presetId === "pilot" ? { maxDepth: 1, maxNodes: 2_000, simulations: 0 } : job.budget, job.rng);
     nodes += hit.nodes;
     pos = applyMove(pos, hit.move);
     moves.push(moveToUci(hit.move));
@@ -331,10 +361,10 @@ function crossover(a: AnyGenome, b: AnyGenome, rng: Rng, id: string): AnyGenome 
       weights: a.weights.map((gene, index) => (rng.next() < 0.5 ? gene : b.weights[index])),
     };
   }
-  if (isNetworkGenome(a) || isNetworkGenome(b)) throw new Error("Schema mismatch");
+  if (isNetworkGenome(a) || isNetworkGenome(b) || a.presetId !== b.presetId) throw new Error("Schema mismatch");
   return {
     id,
-    presetId: "darwin",
+    presetId: a.presetId,
     material: a.material.map((gene, index) => (rng.next() < 0.5 ? gene : b.material[index])) as Genome["material"],
     pst: a.pst.map((gene, index) => (rng.next() < 0.5 ? gene : b.pst[index])),
     terms: a.terms.map((gene, index) => (rng.next() < 0.5 ? gene : b.terms[index])),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createDarwinRun, createSynapseRun, finishGeneration, playNextGame, scheduledGameCount, startGeneration } from "./evolve";
+import { createDarwinRun, createPilotRun, createSynapseRun, finishGeneration, playNextGame, scheduledGameCount, startGeneration } from "./evolve";
 import { isNetworkGenome } from "./network";
 import type { AnyGenome } from "./types";
 import { evaluateWhite } from "./eval";
@@ -59,6 +59,24 @@ describe("darwin", () => {
   });
 });
 
+describe("pilot", () => {
+  it("reproduces a generation and copies two prior elites", () => {
+    const first = pilotGeneration(5);
+    const second = pilotGeneration(5);
+    expect(first.presetId).toBe("pilot");
+    expect(first.result.generation.presetId).toBe("pilot");
+    expect(first.result.population.map((individual) => weightsOf(individual.genome))).toEqual(
+      second.result.population.map((individual) => weightsOf(individual.genome)),
+    );
+    const elites = first.result.population.filter((individual) => individual.parents?.[0] === individual.parents?.[1]);
+    expect(elites).toHaveLength(2);
+    for (const elite of elites) {
+      const parent = first.result.generation.population.find((individual) => individual.id === elite.parents?.[0]);
+      expect(weightsOf(elite.genome)).toEqual(parent ? weightsOf(parent.genome) : undefined);
+    }
+  });
+});
+
 describe("synapse", () => {
   it("reproduces a generation and copies two network elites", () => {
     const first = synapseGeneration(11);
@@ -77,6 +95,15 @@ describe("synapse", () => {
     }
   });
 });
+
+function pilotGeneration(seed: number) {
+  const run = createPilotRun(seed, "0.1.0", "2026-01-01T00:00:00.000Z");
+  const job = startGeneration(run, { maxDepth: 0, maxNodes: 2_000, simulations: 2 }, { maxPlies: 1, now: 0 });
+  while (playNextGame(job)) {
+    // One ply keeps the operator check fast.
+  }
+  return { presetId: run.presetId, result: finishGeneration(job, 1) };
+}
 
 function synapseGeneration(seed: number) {
   const run = createSynapseRun(seed, "0.1.0", "2026-01-01T00:00:00.000Z");

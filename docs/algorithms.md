@@ -87,7 +87,17 @@ UCT Monte Carlo. The genome is not read.
 - The reported score is `round((whiteRate - 0.5) * 200)`. `+100` means every rollout from that move was a white win. The principal variation follows the most-visited child for at most 8 plies.
 - `nodes` counts positions touched during selection and rollouts.
 
-Evolving the rollout policy is outside this preset. If it is added later, it gets a new preset id.
+Surveyor stays uniform. Pilot is the preset that evolves the rollout.
+
+## Pilot
+
+Schema 1, in its own slot `chessy.pilot.v1`. The genome is the same material-plus-PST shape Darwin uses. `presetId` is `pilot`. Search is Surveyor's UCT. The rollout is the part that reads the genome.
+
+- A move's prior is the moving piece's destination PST minus its origin PST. Black reads the rank-flipped table, the same way evaluation does. A capture adds that genome's material value of the captured piece. En passant counts as a pawn. Promotion does not change the piece type used for the PST. Structure terms are stored and inherited, and the rollout does not read them.
+- One legal move is drawn with softmax at temperature 100: probability proportional to `exp(prior / 100)`. The draw is one `rng.next()` after subtracting the max prior. A single legal move still consumes that draw.
+- The root move is still the most-visited child. Equal visits use the seeded RNG.
+- Play uses 80 simulations and a 50,000 node cap. An 80-simulation search from the start position finishes well under a second. Evolution Rapid is 8 simulations. Standard is 24. The Classic anchor, during a Pilot generation, plays one ply of material negamax with a 2,000 node cap. It does not roll out.
+- Operators match Darwin: two elites, tournament size 3, per-locus crossover, the same rounded Gaussian mutation. A new run id is `pilot-{seed}`.
 
 ## Synapse
 

@@ -3,7 +3,7 @@ import { evaluateWhite } from "./eval";
 import { createGenome } from "./presets";
 import { mulberry32 } from "./rng";
 import { parseFen } from "./rules";
-import { search, searchHorizon, searchSurveyor } from "./search";
+import { policyMove, search, searchHorizon, searchPilot, searchSurveyor } from "./search";
 
 describe("eval and search", () => {
   it("scores material from white's point of view", () => {
@@ -77,4 +77,28 @@ describe("eval and search", () => {
     expect(again.pv[0]).toBe(capture.pv[0]);
     expect(again.nodes).toBe(capture.nodes);
   });
+
+  it("samples a capture more often when the queen's material is the prior", () => {
+    const pilot = createGenome("positional");
+    pilot.pst.fill(0);
+    const fen = parseFen("8/8/8/3q4/4P3/8/8/4K2k w - - 0 1");
+    let captures = 0;
+    for (let seed = 0; seed < 40; seed += 1) {
+      const move = policyMove(fen, pilot, mulberry32(seed));
+      if (move.from === 28 && move.to === 35) captures += 1;
+    }
+    expect(captures).toBeGreaterThan(30);
+  });
+
+  it("finishes a pilot search inside a few seconds", () => {
+    const pilot = createGenome("positional");
+    const started = Date.now();
+    const hit = searchPilot(startFen(), pilot, { maxDepth: 0, maxNodes: 50_000, simulations: 80 }, mulberry32(1));
+    expect(hit.pv.length).toBeGreaterThan(0);
+    expect(Date.now() - started).toBeLessThan(3_000);
+  });
 });
+
+function startFen() {
+  return parseFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+}

@@ -52,7 +52,7 @@ export default function MissionPage() {
     <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-5xl flex-col">
       <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Generation</p>
       <p className="mt-3 text-[80px] leading-none font-medium tracking-tight">{generation}</p>
-      <p className="mt-8 text-[11px] tracking-[0.14em] text-faint uppercase">{preset === "synapse" ? "Synapse" : "Darwin"}</p>
+      <p className="mt-8 text-[11px] tracking-[0.14em] text-faint uppercase">{presetLabel(preset)}</p>
       <p className="mt-3 max-w-xl text-muted">
         Self-play under one budget. Evaluations that outscore the anchor carry into the next generation.
       </p>
@@ -78,7 +78,8 @@ export default function MissionPage() {
               pauseActiveGeneration();
               return;
             }
-            if (loadSelectedPreset() !== "synapse") saveSelectedPreset("darwin");
+            const selected = loadSelectedPreset();
+            if (selected !== "synapse" && selected !== "pilot") saveSelectedPreset("darwin");
             router.push("/evolve");
           }}
         >
@@ -107,6 +108,12 @@ export default function MissionPage() {
       </footer>
     </div>
   );
+}
+
+function presetLabel(preset: SelectedPreset): string {
+  if (preset === "synapse") return "Synapse";
+  if (preset === "pilot") return "Pilot";
+  return "Darwin";
 }
 
 function bestScore(scores: Run["generations"][number]["scores"], bestId: string): string {

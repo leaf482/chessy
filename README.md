@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 5 reads parent ids on the Lineage screen. The chain follows the first parent back to a founder. Synapse and Darwin each keep their own run.
+Phase 6 adds Pilot. Rollouts follow an evolvable move prior. Surveyor stays uniform, and Pilot keeps its own run.
 
 ```bash
 npm install
@@ -41,3 +41,4 @@ npm run dev
 4. Horizon and Surveyor
 5. Synapse
 6. Lineage
+7. Pilot

@@ -7,7 +7,7 @@ export type WorkerRequest =
       fen: string;
       genome: AnyGenome;
       budget: Budget;
-      search: "negamax" | "horizon" | "mcts";
+      search: "negamax" | "horizon" | "mcts" | "pilot";
       seed: number;
     }
   | { kind: "generation"; jobId: string; run: Run; budget: Budget }

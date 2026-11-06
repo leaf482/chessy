@@ -56,6 +56,7 @@ A preset binds search, evaluation shape, the initial genome, and whether evoluti
 | `horizon` | Horizon | Phase 2 | Frozen. Quiescence and deeper iterative deepening |
 | `surveyor` | Surveyor | Phase 3 | Frozen. Monte Carlo tree search |
 | `synapse` | Synapse | Phase 4 | On. Small neural evaluation |
+| `pilot` | Pilot | Phase 6 | On. Evolves the Monte Carlo rollout prior |
 
 Classic stays frozen. Every generation plays a set of games against it, so a population that only beats itself still pays for that in the score.
 
@@ -116,6 +117,17 @@ Done when:
 - An elite shows one parent id, and that id is the previous individual.
 - A second parent is one click away.
 - A run with no finished generation lists the initial population and shows `none` for parents.
+
+### 6. Rollout prior
+
+Pilot. Surveyor stays a uniform rollout. Pilot uses the same UCT search and evolves the move prior with Darwin's operators.
+
+Done when:
+
+- The prior is the piece-square delta plus the genome's capture material, sampled with softmax.
+- A Pilot generation plays those rollouts against a one-ply Classic anchor.
+- The run is stored apart from Darwin and Synapse.
+- Play shows the simulation budget.
 
 ## Phase 1 implementation order
 
