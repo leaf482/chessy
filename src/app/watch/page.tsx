@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Board } from "@/components/board";
-import { applyMove, startPosition, uciToMove } from "@/engine/rules";
-import type { GameRecord, Run } from "@/engine/types";
+import { formatCoordinate, replayMoves, startPosition, uciToMove } from "@/engine/rules";
+import type { Run } from "@/engine/types";
+import { latestPlayedIndex } from "@/engine/watch";
 import { PRESET_EVENT, loadSelectedPreset } from "@/store/preset";
 import { RUN_EVENT, loadRunForPreset } from "@/store/run";
 
@@ -14,9 +15,22 @@ export default function WatchPage() {
   const [gameIndex, setGameIndex] = useState(0);
   const [ply, setPly] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const presetKey = useRef<string | null>(null);
+  const currentMove = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    const read = () => setRun(loadRunForPreset(loadSelectedPreset()));
+    const read = () => {
+      const preset = loadSelectedPreset();
+      const next = loadRunForPreset(preset);
+      setRun(next);
+      if (presetKey.current !== preset) {
+        presetKey.current = preset;
+        setGenerationIndex(latestPlayedIndex(next?.generations ?? []));
+        setGameIndex(0);
+        setPly(0);
+        setPlaying(false);
+      }
+    };
     read();
     setReady(true);
     window.addEventListener(RUN_EVENT, read);
@@ -40,8 +54,23 @@ export default function WatchPage() {
     return () => clearInterval(timer);
   }, [playing, game]);
 
-  const position = useMemo(() => replay(game, ply), [game, ply]);
+  useEffect(() => {
+    currentMove.current?.scrollIntoView({ block: "nearest" });
+  }, [ply, gameIndex, generationIndex]);
+
+  const position = useMemo(() => {
+    if (!game) return startPosition();
+    return replayMoves(
+      game.moves.map((uci) => uciToMove(uci)),
+      ply,
+    );
+  }, [game, ply]);
   const last = ply > 0 && game ? moveEnds(game.moves[ply - 1]) : null;
+
+  function stopAt(nextPly: number) {
+    setPly(nextPly);
+    setPlaying(false);
+  }
 
   if (!ready) {
     return (
@@ -51,7 +80,7 @@ export default function WatchPage() {
     );
   }
 
-  if (!generation || generation.games.length === 0) {
+  if (!generation || generation.games.length === 0 || !game) {
     return (
       <div className="mx-auto max-w-5xl">
         <p className="text-[11px] tracking-[0.14em] text-faint uppercase">Watch</p>
@@ -106,13 +135,19 @@ export default function WatchPage() {
       <div>
         <Board board={position.board} orientation="w" selected={null} targets={[]} lastMove={last} />
         <div className="mt-4 flex gap-4 text-sm">
-          <button type="button" className="opacity-80 hover:opacity-100" onClick={() => setPly((current) => Math.max(0, current - 1))}>
+          <button
+            type="button"
+            className="opacity-80 hover:opacity-100 disabled:opacity-40"
+            disabled={ply === 0}
+            onClick={() => stopAt(Math.max(0, ply - 1))}
+          >
             Previous
           </button>
           <button
             type="button"
-            className="opacity-80 hover:opacity-100"
-            onClick={() => setPly((current) => Math.min(game?.moves.length ?? 0, current + 1))}
+            className="opacity-80 hover:opacity-100 disabled:opacity-40"
+            disabled={ply >= game.moves.length}
+            onClick={() => stopAt(Math.min(game.moves.length, ply + 1))}
           >
             Next
           </button>
@@ -121,8 +156,22 @@ export default function WatchPage() {
           </button>
         </div>
         <p className="mt-3 text-sm text-faint">
-          {game?.result} · {game?.reason}
+          {game.result} · {game.reason}
         </p>
+        <ol className="mt-4 max-h-48 space-y-1 overflow-auto text-sm">
+          {game.moves.map((uci, index) => (
+            <li key={`${uci}-${index}`}>
+              <button
+                ref={index + 1 === ply ? currentMove : undefined}
+                type="button"
+                className={index + 1 === ply ? "text-white" : "text-muted"}
+                onClick={() => stopAt(index + 1)}
+              >
+                {formatCoordinate(uciToMove(uci))}
+              </button>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   );
@@ -130,13 +179,6 @@ export default function WatchPage() {
 
 function emptyBoard(): number[] {
   return Array.from({ length: 64 }, () => 0);
-}
-
-function replay(game: GameRecord | undefined, ply: number) {
-  let position = startPosition();
-  if (!game) return position;
-  for (const uci of game.moves.slice(0, ply)) position = applyMove(position, uciToMove(uci));
-  return position;
 }
 
 function moveEnds(uci: string): { from: number; to: number } {

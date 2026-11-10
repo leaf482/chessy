@@ -101,8 +101,10 @@ Board:
 
 A player for completed game records.
 
-- Generation picker, that generation's game list, the board, previous move, next move.
-- Autoplay uses one speed: 600ms per move.
+- The screen opens on the last generation that has games. The generation picker still reaches the others.
+- That generation's game list, the board, previous move, and next move.
+- The selected game lists every move in coordinate notation. A line jumps the board to the position after that move, and the current line is white.
+- Autoplay uses one speed: 600ms per move. Previous, Next, and a move line stop autoplay.
 - With no games, show an empty board and `No games in this generation`.
 
 ### Lineage `/lineage`
