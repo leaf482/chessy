@@ -14,6 +14,7 @@ import {
   legalMoves,
   pieceColor,
   positionKey,
+  replayMoves,
   startPosition,
   toFen,
   uciToMove,
@@ -37,7 +38,7 @@ export default function PlayPage() {
   const [log, setLog] = useState<Move[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [promo, setPromo] = useState<{ from: number; to: number } | null>(null);
-  const [lastMove, setLastMove] = useState<{ from: number; to: number } | null>(null);
+  const [ply, setPly] = useState(0);
   const [orientation, setOrientation] = useState<"w" | "b">("w");
   const [pending, setPending] = useState(false);
   const [end, setEnd] = useState<GameResult | null>(null);
@@ -65,9 +66,9 @@ export default function PlayPage() {
     setPos(startPosition());
     setHistory([positionKey(startPosition())]);
     setLog([]);
+    setPly(0);
     setSelected(null);
     setPromo(null);
-    setLastMove(null);
     setPending(false);
     setEnd(null);
     setError(null);
@@ -85,8 +86,11 @@ export default function PlayPage() {
   const pilot = (opponent && !isNetworkGenome(opponent) && opponent.presetId === "pilot") || (!opponent && preset === "pilot");
   const searchKind = !opponent && preset === "horizon" ? "horizon" : !opponent && preset === "surveyor" ? "mcts" : pilot ? "pilot" : "negamax";
   const budget = network ? SYNAPSE_BUDGET : pilot ? PILOT_PLAY : !opponent && preset === "surveyor" ? SURVEYOR_BUDGET : PLAY_BUDGET;
+  const live = ply >= log.length;
+  const shown = useMemo(() => (live ? pos : replayMoves(log, ply)), [live, pos, log, ply]);
+  const shownLast = ply > 0 ? { from: log[ply - 1].from, to: log[ply - 1].to } : null;
   const legal = useMemo(() => legalMoves(pos), [pos]);
-  const targets = selected === null ? [] : legal.filter((move) => move.from === selected).map((move) => move.to);
+  const targets = !live || selected === null ? [] : legal.filter((move) => move.from === selected).map((move) => move.to);
 
   useEffect(() => {
     if (!pending || end || !genome) return;
@@ -118,7 +122,7 @@ export default function PlayPage() {
     setPos(next);
     setHistory(nextHistory);
     setLog((entries) => [...entries, move]);
-    setLastMove({ from: move.from, to: move.to });
+    setPly((current) => current + 1);
     setSelected(null);
     setPromo(null);
     const result = gameResult(next, nextHistory);
@@ -127,7 +131,7 @@ export default function PlayPage() {
   }
 
   function onSquare(square: number) {
-    if (pending || end || pos.side !== "w") return;
+    if (!live || pending || end || pos.side !== "w") return;
     if (selected !== null) {
       const options = legal.filter((move) => move.from === selected && move.to === square);
       if (options.length > 1 || options[0]?.promotion) {
@@ -163,25 +167,27 @@ export default function PlayPage() {
   }
 
   const label = opponent ? opponent.id : preset;
-  const status = end
-    ? end.reason
-    : pending
-      ? "Thinking"
-      : inCheck(pos, pos.side)
-        ? "Check"
-        : pos.side === "w"
-          ? "White to move"
-          : "Black to move";
+  const status = !live
+    ? `Ply ${ply}`
+    : end
+      ? end.reason
+      : pending
+        ? "Thinking"
+        : inCheck(pos, pos.side)
+          ? "Check"
+          : pos.side === "w"
+            ? "White to move"
+            : "Black to move";
 
   return (
     <div className="mx-auto grid max-w-5xl gap-10 min-[960px]:grid-cols-[auto_280px]">
       <div>
         <Board
-          board={pos.board}
+          board={shown.board}
           orientation={orientation}
-          selected={selected}
+          selected={live ? selected : null}
           targets={targets}
-          lastMove={lastMove}
+          lastMove={shownLast}
           onSquare={onSquare}
         />
         {promo ? (
@@ -228,10 +234,47 @@ export default function PlayPage() {
         <ol className="mt-2 max-h-48 space-y-1 overflow-auto text-sm text-muted">
           {log.length === 0 ? <li className="text-faint">No moves</li> : null}
           {log.map((move, index) => (
-            <li key={`${formatCoordinate(move)}-${index}`}>{formatCoordinate(move)}</li>
+            <li key={`${formatCoordinate(move)}-${index}`}>
+              <button
+                type="button"
+                className={index + 1 === ply ? "text-white" : "text-muted"}
+                disabled={pending}
+                onClick={() => {
+                  setPly(index + 1);
+                  setSelected(null);
+                  setPromo(null);
+                }}
+              >
+                {formatCoordinate(move)}
+              </button>
+            </li>
           ))}
         </ol>
-        <div className="mt-6 flex gap-4 text-sm">
+        <div className="mt-6 flex flex-wrap gap-4 text-sm">
+          <button
+            type="button"
+            className="text-muted opacity-80 hover:opacity-100 disabled:opacity-40"
+            disabled={pending || ply === 0}
+            onClick={() => {
+              setPly((current) => Math.max(0, current - 1));
+              setSelected(null);
+              setPromo(null);
+            }}
+          >
+            Previous
+          </button>
+          <button
+            type="button"
+            className="text-muted opacity-80 hover:opacity-100 disabled:opacity-40"
+            disabled={pending || ply >= log.length}
+            onClick={() => {
+              setPly((current) => Math.min(log.length, current + 1));
+              setSelected(null);
+              setPromo(null);
+            }}
+          >
+            Next
+          </button>
           <button
             type="button"
             className="text-muted opacity-80 hover:opacity-100"

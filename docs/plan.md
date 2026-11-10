@@ -151,6 +151,17 @@ Done when:
 - A move off the edge leaves focus where it is.
 - Enter on the focused square plays or selects, the same as a click.
 
+### 9. Play review
+
+The Play game record steps the board. The live position stays the end of the list.
+
+Done when:
+
+- Previous and Next move one ply. A move in the list jumps to the position after that move.
+- Behind the last ply, the status reads `Ply N` and a square does not start a move.
+- At the last ply, play continues. A new move returns the board to the live position.
+- While the engine is thinking, the record does not move.
+
 ## Phase 1 implementation order
 
 1. Next.js, TypeScript, and Tailwind scaffold

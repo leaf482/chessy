@@ -85,8 +85,8 @@ Panel order:
 1. Opponent name and preset id
 2. Budget: Depth and Nodes, or the simulation count for Surveyor
 3. Last search: score, nodes, pv
-4. Game record. One move per line, UCI converted to coordinate notation
-5. Actions are `New game` and `Flip board`
+4. Game record. One move per line, UCI converted to coordinate notation. Each line jumps the board to the position after that move.
+5. Actions are `Previous`, `Next`, `New game`, and `Flip board`
 
 Board:
 
@@ -94,7 +94,8 @@ Board:
 - Files a–h and ranks 1–8 are faint labels.
 - Show the selected square and the legal destinations. No coaching arrows.
 - A human move is two clicks. Promotion opens queen, rook, bishop, and knight beside the board. There is no automatic queen promotion.
-- While the engine thinks, the panel status becomes `Thinking`. The board is not dimmed.
+- While the engine thinks, the panel status becomes `Thinking`. The board is not dimmed. Previous, Next, and the move list stay put until the reply arrives.
+- Previous and Next step one ply. Behind the last ply the status reads `Ply N`, legal destinations disappear, and a square does not start a move. At the last ply, play continues. A move played from there shows the new live position.
 
 ### Watch `/watch`
 

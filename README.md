@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 8 moves the board cursor with the arrow keys. Enter on the focused square is the same as a click. A flipped board reverses the direction.
+Phase 9 steps through the Play game record. Behind the last ply the board shows that position and does not accept a move. At the last ply, play continues.
 
 ```bash
 npm install
@@ -44,3 +44,4 @@ npm run dev
 7. Pilot
 8. Hall
 9. Keyboard board
+10. Play review
