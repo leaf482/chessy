@@ -140,6 +140,17 @@ Done when:
 - `Play` on a row opens that genome on the board and leaves the other runs in place.
 - An empty hall says `No hall yet.`
 
+### 8. Keyboard board
+
+Arrow keys move across the board. Enter stays the click.
+
+Done when:
+
+- From a focused square, each arrow moves focus one square in that screen direction.
+- Flip board reverses the mapping.
+- A move off the edge leaves focus where it is.
+- Enter on the focused square plays or selects, the same as a click.
+
 ## Phase 1 implementation order
 
 1. Next.js, TypeScript, and Tailwind scaffold

@@ -75,6 +75,22 @@ export function parseSquare(text: string): number {
   return text.charCodeAt(0) - 97 + (text.charCodeAt(1) - 49) * 8;
 }
 
+export function stepSquare(square: number, key: string, orientation: "w" | "b"): number | null {
+  const file = square & 7;
+  const rank = square >> 3;
+  const up = orientation === "w" ? 1 : -1;
+  const right = orientation === "w" ? 1 : -1;
+  let nextFile = file;
+  let nextRank = rank;
+  if (key === "ArrowUp") nextRank += up;
+  else if (key === "ArrowDown") nextRank -= up;
+  else if (key === "ArrowRight") nextFile += right;
+  else if (key === "ArrowLeft") nextFile -= right;
+  else return null;
+  if (nextFile < 0 || nextFile > 7 || nextRank < 0 || nextRank > 7) return square;
+  return nextRank * 8 + nextFile;
+}
+
 export function moveToUci(move: Move): string {
   return squareName(move.from) + squareName(move.to) + (move.promotion ?? "");
 }
