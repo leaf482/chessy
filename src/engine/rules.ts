@@ -128,6 +128,13 @@ export function startPosition(): Position {
   return parseFen(START_FEN);
 }
 
+export function replayMoves(moves: Move[], ply: number): Position {
+  let position = startPosition();
+  const end = Math.max(0, Math.min(ply, moves.length));
+  for (let index = 0; index < end; index += 1) position = applyMove(position, moves[index]);
+  return position;
+}
+
 export function parseFen(fen: string): Position {
   const parts = fen.trim().split(/\s+/);
   if (parts.length < 4) throw new Error(`Invalid FEN: ${fen}`);

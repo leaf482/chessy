@@ -6,7 +6,9 @@ import {
   moveToUci,
   parseFen,
   parseSquare,
+  replayMoves,
   stepSquare,
+  uciToMove,
   perft,
   positionKey,
   startPosition,
@@ -80,6 +82,17 @@ describe("rules", () => {
 
     const key = positionKey(startPosition());
     expect(gameResult(startPosition(), [key, key, key])?.reason).toBe("threefold");
+  });
+
+  it("replays a prefix of the move list", () => {
+    const moves = [uciToMove("e2e4"), uciToMove("e7e5")];
+    const first = applyMove(startPosition(), moves[0]);
+    const second = applyMove(first, moves[1]);
+    expect(replayMoves(moves, 0)).toEqual(startPosition());
+    expect(replayMoves(moves, 1)).toEqual(first);
+    expect(replayMoves(moves, 2)).toEqual(second);
+    expect(replayMoves(moves, 9)).toEqual(second);
+    expect(replayMoves([], 1)).toEqual(startPosition());
   });
 
   it("steps one square in the direction on screen", () => {
