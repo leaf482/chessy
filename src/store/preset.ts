@@ -16,13 +16,20 @@ export function loadSelectedPreset(): SelectedPreset {
   return "classic";
 }
 
+export function keepOpponent(id: SelectedPreset, opponent: AnyGenome | null): boolean {
+  if (!opponent) return false;
+  const network = isNetworkGenome(opponent);
+  const classic = !network && opponent.presetId === "classic";
+  const pilot = !network && opponent.presetId === "pilot";
+  if (id === "synapse") return network || classic;
+  if (id === "pilot") return pilot || classic;
+  if (id === "darwin") return !network && !pilot;
+  return false;
+}
+
 export function saveSelectedPreset(id: SelectedPreset): void {
   localStorage.setItem(KEY, id);
-  const opponent = loadOpponent();
-  const network = opponent ? isNetworkGenome(opponent) : false;
-  const pilot = opponent !== null && !network && opponent.presetId === "pilot";
-  const keep = (id === "synapse" && network) || (id === "pilot" && pilot) || (id === "darwin" && opponent !== null && !network && !pilot);
-  if (!keep) localStorage.removeItem(OPPONENT_KEY);
+  if (!keepOpponent(id, loadOpponent())) localStorage.removeItem(OPPONENT_KEY);
   window.dispatchEvent(new Event(PRESET_EVENT));
   window.dispatchEvent(new Event(OPPONENT_EVENT));
 }
