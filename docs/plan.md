@@ -162,6 +162,17 @@ Done when:
 - At the last ply, play continues. A new move returns the board to the live position.
 - While the engine is thinking, the record does not move.
 
+### 10. Watch record
+
+Watch opens on the newest played generation and lists that game's moves.
+
+Done when:
+
+- The first visit selects the last generation whose game list is not empty.
+- Each move is a line in coordinate notation. The line jumps the board to the position after that move.
+- Previous, Next, and Play still step one ply. The current line stays marked, and a manual step stops autoplay.
+- A generation with no games still says `No games in this generation`.
+
 ## Phase 1 implementation order
 
 1. Next.js, TypeScript, and Tailwind scaffold

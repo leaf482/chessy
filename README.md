@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 9 steps through the Play game record. Behind the last ply the board shows that position and does not accept a move. At the last ply, play continues.
+Phase 10 opens Watch on the newest generation that has games and lists that game's moves. A line jumps the board to the position after that move.
 
 ```bash
 npm install
@@ -45,3 +45,4 @@ npm run dev
 8. Hall
 9. Keyboard board
 10. Play review
+11. Watch record
