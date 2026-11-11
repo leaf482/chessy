@@ -8,7 +8,7 @@ Chessy's subject is the board and the generation number.
 
 ## Tone
 
-- Sentences stay short. Buttons are verbs: `Start evolution`, `Watch game`, `Play best`.
+- Sentences stay short. Buttons are verbs: `Start evolution`, `Watch game`, `Play best`, `Play anchor`.
 - Product name, preset names, labels, and body copy are English.
 - Status is literal. Evolution running is `Running`, stopped is `Paused`, and a failure is `Worker error` plus the message.
 - Strength words are the metric names from the algorithm doc: Best fitness, Anchor.
@@ -68,12 +68,13 @@ depth 2 · population 12 · seed 1042
 12          7.5         1,240
 GENERATION  ANCHOR      NODES/S
 
-[ Start evolution ]  [ Play best ]
+[ Start evolution ]  [ Play best ]  [ Play anchor ]
 ```
 
 - With no run, Generation reads `00` and the supporting line describes the default preset, Darwin.
 - The primary action is `Start evolution`. While a run is going, it reads `Pause`.
 - `Play best` is enabled only when a best individual exists.
+- `Play anchor` stores the Classic genome as the opponent and opens Play. The selected Darwin, Synapse, or Pilot preset stays put.
 - Under the hero, show Anchor for the latest six generations as a row of numbers. Phase 1 does not add a chart library.
 
 ### Play `/play`

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { bestIndividual } from "@/engine/evolve";
-import { RAPID_BUDGET } from "@/engine/presets";
+import { RAPID_BUDGET, createGenome } from "@/engine/presets";
 import type { Run } from "@/engine/types";
 import { PRESET_EVENT, loadSelectedPreset, saveOpponent, saveSelectedPreset, type SelectedPreset } from "@/store/preset";
 import { RUN_EVENT, RUN_STATUS_EVENT, loadRunForPreset } from "@/store/run";
@@ -99,6 +99,16 @@ export default function MissionPage() {
         ) : (
           <span className="border border-white/15 px-4 py-3 text-sm text-faint">Play best</span>
         )}
+        <button
+          type="button"
+          className="border border-white/40 px-4 py-3 text-sm opacity-80 hover:opacity-100"
+          onClick={() => {
+            saveOpponent(createGenome("classic"));
+            router.push("/play");
+          }}
+        >
+          Play anchor
+        </button>
       </div>
       <footer className="mt-auto flex gap-6 pt-16 text-[11px] tracking-[0.14em] text-faint uppercase">
         <span>{APP_VERSION}</span>
