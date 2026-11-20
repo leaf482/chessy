@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 10 opens Watch on the newest generation that has games and lists that game's moves. A line jumps the board to the position after that move.
+Phase 11 adds Play anchor on Mission. It opens Classic as the opponent and leaves the Darwin, Synapse, or Pilot run in place.
 
 ```bash
 npm install
@@ -46,3 +46,4 @@ npm run dev
 9. Keyboard board
 10. Play review
 11. Watch record
+12. Play anchor

@@ -173,6 +173,17 @@ Done when:
 - Previous, Next, and Play still step one ply. The current line stays marked, and a manual step stops autoplay.
 - A generation with no games still says `No games in this generation`.
 
+### 11. Play anchor
+
+Mission plays the Classic anchor without leaving the current run.
+
+Done when:
+
+- Mission shows `Play anchor` beside `Play best`.
+- `Play anchor` stores the Classic genome as the opponent and opens Play. The selected Darwin, Synapse, or Pilot preset stays put.
+- Play labels that opponent as Classic.
+- Choosing Classic, Positional, Horizon, or Surveyor from Presets still clears the override. A Classic override stays when switching among Darwin, Synapse, and Pilot.
+
 ## Phase 1 implementation order
 
 1. Next.js, TypeScript, and Tailwind scaffold

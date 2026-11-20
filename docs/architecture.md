@@ -185,7 +185,7 @@ Progress events omit board state. Watch replays completed `games[].moves`.
 - Export writes that same JSON to a file. Import checks `schema: 1` with preset `darwin`, or `schema: 2` with preset `synapse`, and rejects a file whose preset does not match the open screen.
 - Preset definitions are not stored. A save stores `presetId` and resolves it through the app's preset table.
 
-A human Play session is not part of `Run`. The selected preset is `chessy.preset.v1`. Play best stores that genome at `chessy.opponent.v1`. Darwin and Synapse search it with negamax. Pilot searches it with the policy rollout. Darwin keeps a weight opponent. Synapse keeps a network opponent. Pilot keeps a pilot opponent. Classic, Positional, Horizon, and Surveyor clear the override. The other run slot stays. An in-progress generation asks before it is stopped. A refresh may reset the game in progress. The evolution log is what persists.
+A human Play session is not part of `Run`. The selected preset is `chessy.preset.v1`. Play best and Hall Play store that genome at `chessy.opponent.v1`. Mission `Play anchor` stores the Classic genome there without changing the selected preset. Darwin and Synapse search a weight or network opponent with negamax. Pilot searches a pilot opponent with the policy rollout. A Classic override stays on Darwin, Synapse, and Pilot. Darwin also keeps a non-pilot weight opponent. Synapse keeps a network opponent. Pilot keeps a pilot opponent. Classic, Positional, Horizon, and Surveyor clear the override. The other run slot stays. An in-progress generation asks before it is stopped. A refresh may reset the game in progress. The evolution log is what persists.
 
 ## Randomness
 
