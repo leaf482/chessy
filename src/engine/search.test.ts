@@ -24,6 +24,18 @@ describe("eval and search", () => {
     expect(createGenome("classic").pst).toHaveLength(384);
   });
 
+  it("rates more legal moves as better when the mobility term is positive", () => {
+    const genome = {
+      ...createGenome("positional"),
+      material: [0, 0, 0, 0, 0] as [number, number, number, number, number],
+      terms: [0, 10, 0],
+      pst: Array<number>(384).fill(0),
+    };
+    const open = evaluateWhite(parseFen("4k3/8/8/8/3N4/8/8/4K3 w - - 0 1"), genome);
+    const closed = evaluateWhite(parseFen("4k3/8/8/8/8/8/8/N3K3 w - - 0 1"), genome);
+    expect(open).toBeGreaterThan(closed);
+  });
+
   it("takes a free queen and plays mate in one", () => {
     const classic = createGenome("classic");
     const budget = { maxDepth: 1, maxNodes: 5_000, simulations: 0 };

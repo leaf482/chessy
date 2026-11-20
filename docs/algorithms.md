@@ -50,7 +50,7 @@ score = material · counts + pst[piece][square] + terms · features
 - `counts` is a length-5 vector of white piece counts minus black piece counts.
 - PST tables are stored from White's view. Black reads the same table with ranks flipped.
 - Square index is `file + rank * 8`, with a1 at 0.
-- In phase 1, `terms` has length 3: `[bishop pair, legal-move count, doubled pawns]`. The doubled-pawn coefficient is negative.
+- `terms` has length 3: `[bishop pair, legal-move count, doubled pawns]`. The middle feature is white legal moves minus black legal moves. The doubled-pawn coefficient is negative. Positional starts with mobility weight 0; Darwin may mutate it.
 - The starting tables are hand-written: central pawns and developed knights get a small positive value, knights on the rim get a small negative value. Implementation keeps the constants in `presets.ts`. The test only locks that a central knight outscores a corner knight. The full tables are not copied into this doc.
 
 Positional is the readable reference individual. Darwin starts from the Positional tables. Starting Darwin from the empty Classic tables is not a leftover experiment flag.

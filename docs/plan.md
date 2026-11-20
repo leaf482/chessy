@@ -184,6 +184,17 @@ Done when:
 - Play labels that opponent as Classic.
 - Choosing Classic, Positional, Horizon, or Surveyor from Presets still clears the override. A Classic override stays when switching among Darwin, Synapse, and Pilot.
 
+### 12. Structure terms
+
+The middle evaluation term is the legal-move count. Evolve and Hall show the three term values.
+
+Done when:
+
+- Positional evaluation's middle feature is white legal moves minus black legal moves.
+- A test locks that, with a positive mobility coefficient, a high-mobility White position outscores a low-mobility one on the same material.
+- Evolve and Hall show the three term values beside material. Synapse still shows the weight count only.
+- Start genomes stay length-3 `terms`. Classic stays `[0, 0, 0]`. Positional, Darwin, Horizon, and Pilot keep `[30, 0, -20]`. Pilot rollouts still ignore terms.
+
 ## Phase 1 implementation order
 
 1. Next.js, TypeScript, and Tailwind scaffold

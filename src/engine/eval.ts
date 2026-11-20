@@ -1,6 +1,6 @@
 import { networkValue, isNetworkGenome } from "./network";
-import { BISHOP, KING, PAWN, WHITE, pieceColor, pieceType } from "./rules";
-import type { AnyGenome, Genome, Position } from "./types";
+import { BISHOP, KING, PAWN, WHITE, legalMoves, pieceColor, pieceType } from "./rules";
+import type { AnyGenome, Position } from "./types";
 
 function flipRank(square: number): number {
   return ((7 - (square >> 3)) << 3) | (square & 7);
@@ -39,9 +39,11 @@ export function evaluateWhite(pos: Position, genome: AnyGenome): number {
   for (let index = 0; index < 5; index += 1) score += genome.material[index] * counts[index];
 
   const doubled = (files: number[]) => files.reduce((sum, count) => sum + Math.max(0, count - 1), 0);
+  const whiteMoves = legalMoves({ ...pos, side: "w" }).length;
+  const blackMoves = legalMoves({ ...pos, side: "b" }).length;
   const features = [
     (whiteBishops >= 2 ? 1 : 0) - (blackBishops >= 2 ? 1 : 0),
-    0,
+    whiteMoves - blackMoves,
     doubled(whitePawns) - doubled(blackPawns),
   ];
   for (let index = 0; index < features.length; index += 1) {

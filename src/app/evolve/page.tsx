@@ -331,6 +331,7 @@ function GenomeDetail({ individual }: { individual: Individual | undefined }) {
           ? `Weights ${individual.genome.weights.length.toLocaleString("en-US")}`
           : `Material ${individual.genome.material.join(" ")}`}
       </p>
+      {!isNetworkGenome(individual.genome) ? <p className="mt-2 text-muted">Terms {individual.genome.terms.join(" ")}</p> : null}
       <p className="mt-2 text-faint">Parents {individual.parents ? individual.parents.join(" ") : "none"}</p>
       <button type="button" className="mt-3 opacity-80 hover:opacity-100" onClick={() => downloadJson(`${individual.genome.id}.json`, individual.genome)}>
         Export genome
