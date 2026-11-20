@@ -95,6 +95,7 @@ function HallDetail({ entry, onPlay }: { entry: HallEntry; onPlay: () => void })
       <p className="mt-2 text-muted">
         {isNetworkGenome(genome) ? `Weights ${genome.weights.length.toLocaleString("en-US")}` : `Material ${genome.material.join(" ")}`}
       </p>
+      {!isNetworkGenome(genome) ? <p className="mt-2 text-muted">Terms {genome.terms.join(" ")}</p> : null}
       <button type="button" className="mt-4 border border-white/40 px-4 py-3 opacity-80 hover:opacity-100" onClick={onPlay}>
         Play
       </button>
