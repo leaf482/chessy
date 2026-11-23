@@ -224,6 +224,10 @@ export function bestIndividual(run: Run): Individual | null {
   return last.population.find((individual) => individual.id === last.bestId) ?? null;
 }
 
+export function isElite(individual: Individual): boolean {
+  return individual.parents !== null && individual.parents[0] === individual.parents[1];
+}
+
 function buildSchedule(population: Individual[], hall: Individual | null): Pairing[] {
   const classic = createGenome("classic");
   const anchorSeat: Seat = { id: classic.id, genome: classic };

@@ -195,6 +195,17 @@ Done when:
 - Evolve and Hall show the three term values beside material. Synapse still shows the weight count only.
 - Start genomes stay length-3 `terms`. Classic stays `[0, 0, 0]`. Positional, Darwin, Horizon, and Pilot keep `[30, 0, -20]`. Pilot rollouts still ignore terms.
 
+### 13. Fitness components
+
+Evolve shows the Peer and Fame parts of fitness. Elite follows parent ids.
+
+Done when:
+
+- Selecting a ranked row shows Peer and Fame for that individual.
+- Fame reads `—` when `famePoints` is null.
+- The Elite column marks `parents[0] === parents[1]`. Founders with `parents: null` are not elite.
+- The same detail works for Darwin, Synapse, and Pilot.
+
 ## Phase 1 implementation order
 
 1. Next.js, TypeScript, and Tailwind scaffold

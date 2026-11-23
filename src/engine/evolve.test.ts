@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { createDarwinRun, createPilotRun, createSynapseRun, finishGeneration, playNextGame, scheduledGameCount, startGeneration } from "./evolve";
+import {
+  createDarwinRun,
+  createPilotRun,
+  createSynapseRun,
+  finishGeneration,
+  isElite,
+  playNextGame,
+  scheduledGameCount,
+  startGeneration,
+} from "./evolve";
 import { isNetworkGenome } from "./network";
 import type { AnyGenome } from "./types";
 import { evaluateWhite } from "./eval";
@@ -32,7 +41,7 @@ describe("darwin", () => {
       second.result.population.map((individual) => weightsOf(individual.genome)),
     );
     expect(first.result.generation.games).toHaveLength(48);
-    const elites = first.result.population.filter((individual) => individual.parents?.[0] === individual.parents?.[1]);
+    const elites = first.result.population.filter(isElite);
     expect(elites).toHaveLength(2);
     for (const elite of elites) {
       const parent = first.result.generation.population.find((individual) => individual.id === elite.parents?.[0]);
@@ -41,6 +50,9 @@ describe("darwin", () => {
       expect(elite.genome.id).toBe(parent?.genome.id);
     }
     expect(first.result.hallOfFame).toHaveLength(1);
+    expect(first.result.generation.population.every((individual) => !isElite(individual))).toBe(true);
+    expect(first.result.generation.scores[0].famePoints).toBeNull();
+    expect(first.result.generation.scores[0].peerPoints).toBeGreaterThanOrEqual(0);
   });
 
   it("caps a game that reaches the ply limit", () => {
@@ -68,7 +80,7 @@ describe("pilot", () => {
     expect(first.result.population.map((individual) => weightsOf(individual.genome))).toEqual(
       second.result.population.map((individual) => weightsOf(individual.genome)),
     );
-    const elites = first.result.population.filter((individual) => individual.parents?.[0] === individual.parents?.[1]);
+    const elites = first.result.population.filter(isElite);
     expect(elites).toHaveLength(2);
     for (const elite of elites) {
       const parent = first.result.generation.population.find((individual) => individual.id === elite.parents?.[0]);
@@ -86,7 +98,7 @@ describe("synapse", () => {
     expect(first.result.population.map((individual) => weightsOf(individual.genome))).toEqual(
       second.result.population.map((individual) => weightsOf(individual.genome)),
     );
-    const elites = first.result.population.filter((individual) => individual.parents?.[0] === individual.parents?.[1]);
+    const elites = first.result.population.filter(isElite);
     expect(elites).toHaveLength(2);
     for (const elite of elites) {
       expect(isNetworkGenome(elite.genome)).toBe(true);

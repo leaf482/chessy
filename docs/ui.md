@@ -147,7 +147,7 @@ Below that:
 - Progress for this generation, such as `18 / 72 games`. The first generation, with an empty hall, uses 48 as the denominator.
 - A table: rank, first 8 characters of id, fitness, anchor, elite
 
-Selecting a row reveals that genome's five material numbers, its three term values, and its parent ids. The 384 PST values stay collapsed. `Export genome` downloads that row's JSON only.
+Selecting a row reveals that genome's five material numbers, its three term values, Peer, Fame, and its parent ids. Fame is `—` when null. Elite in the table means `parents[0] === parents[1]`. The 384 PST values stay collapsed. `Export genome` downloads that row's JSON only.
 
 Secondary actions: `Export run`, `Import run`, `New run`. `New run` asks for confirmation before clearing the current run.
 
