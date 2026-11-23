@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 12 wires the legal-move count into evaluation. Evolve and Hall show the three term values beside material.
+Phase 13 shows Peer and Fame on Evolve. Elite marks copied parents, not the top two ranks alone.
 
 ```bash
 npm install
@@ -48,3 +48,4 @@ npm run dev
 11. Watch record
 12. Play anchor
 13. Structure terms
+14. Fitness components

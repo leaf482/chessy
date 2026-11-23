@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { createDarwinRun, createPilotRun, createSynapseRun } from "@/engine/evolve";
+import { createDarwinRun, createPilotRun, createSynapseRun, isElite } from "@/engine/evolve";
 import { isNetworkGenome } from "@/engine/network";
 import { PILOT_RAPID, PILOT_STANDARD, RAPID_BUDGET, STANDARD_BUDGET } from "@/engine/presets";
-import type { Budget, Individual, Run } from "@/engine/types";
+import type { Budget, Individual, Run, ScoreRecord } from "@/engine/types";
 import { loadSelectedPreset, type SelectedPreset } from "@/store/preset";
 import { downloadJson, loadRunForPreset, mergeGeneration, publishStatus, saveRun } from "@/store/run";
 import { parseRun } from "@/engine/evolve";
@@ -216,19 +216,25 @@ export default function EvolvePage() {
         <tbody>
           {ranked.map((score, index) => {
             const open = openId === score.id;
+            const individual = last?.population.find((entry) => entry.id === score.id);
             return (
               <tr key={score.id} className="cursor-pointer border-t border-line" onClick={() => setOpenId(open ? null : score.id)}>
                 <td className="py-2">{index + 1}</td>
                 <td>{score.id.slice(0, 8)}</td>
                 <td>{score.fitness.toFixed(2)}</td>
                 <td>{score.anchorPoints.toFixed(2)}</td>
-                <td>{index < 2 ? "yes" : ""}</td>
+                <td>{individual && isElite(individual) ? "yes" : ""}</td>
               </tr>
             );
           })}
         </tbody>
       </table>
-      {openId && last ? <GenomeDetail individual={last.population.find((entry) => entry.id === openId)} /> : null}
+      {openId && last ? (
+        <GenomeDetail
+          individual={last.population.find((entry) => entry.id === openId)}
+          score={last.scores.find((entry) => entry.id === openId)}
+        />
+      ) : null}
       <div className="mt-8 flex flex-wrap gap-4 text-sm">
         <button type="button" className="opacity-80 hover:opacity-100" onClick={() => run && downloadJson(`${run.id}.json`, run)}>
           Export run
@@ -322,7 +328,7 @@ function freshRun(preset: SelectedPreset, seed: number): Run {
   return createDarwinRun(seed, APP_VERSION);
 }
 
-function GenomeDetail({ individual }: { individual: Individual | undefined }) {
+function GenomeDetail({ individual, score }: { individual: Individual | undefined; score: ScoreRecord | undefined }) {
   if (!individual) return null;
   return (
     <div className="mt-4 border border-line p-4 text-sm">
@@ -332,6 +338,11 @@ function GenomeDetail({ individual }: { individual: Individual | undefined }) {
           : `Material ${individual.genome.material.join(" ")}`}
       </p>
       {!isNetworkGenome(individual.genome) ? <p className="mt-2 text-muted">Terms {individual.genome.terms.join(" ")}</p> : null}
+      {score ? (
+        <p className="mt-2 text-muted">
+          Peer {score.peerPoints.toFixed(2)} · Fame {score.famePoints === null ? "—" : score.famePoints.toFixed(2)}
+        </p>
+      ) : null}
       <p className="mt-2 text-faint">Parents {individual.parents ? individual.parents.join(" ") : "none"}</p>
       <button type="button" className="mt-3 opacity-80 hover:opacity-100" onClick={() => downloadJson(`${individual.genome.id}.json`, individual.genome)}>
         Export genome
