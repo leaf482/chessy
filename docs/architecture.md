@@ -70,7 +70,7 @@ type Genome = {
   material: [number, number, number, number, number];
   // 6 piece types × 64 squares. Square order is a1=0 … h8=63
   pst: number[];
-  // Larger values weigh sparse features such as bishop pair and mobility. Phase 1 may keep these at 0
+  // Larger values weigh sparse features: bishop pair, legal-move count, doubled pawns
   terms: number[];
 };
 

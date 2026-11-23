@@ -124,7 +124,7 @@ The best-so-far opponent pool for the selected preset's run.
 
 - Order is the stored hall order: highest anchor first, then id.
 - Each row shows rank, individual id, anchor score, and generation.
-- The selected row shows the genome id and either the five material numbers or the weight count.
+- The selected row shows the genome id and either the five material numbers plus the three term values, or the weight count.
 - `Play` stores that genome as the opponent and opens Play. The preset stays put.
 - With no run, or an empty hall, the screen says `No hall yet.`
 
@@ -147,7 +147,7 @@ Below that:
 - Progress for this generation, such as `18 / 72 games`. The first generation, with an empty hall, uses 48 as the denominator.
 - A table: rank, first 8 characters of id, fitness, anchor, elite
 
-Selecting a row reveals that genome's five material numbers and its parent ids. The 384 PST values stay collapsed. `Export genome` downloads that row's JSON only.
+Selecting a row reveals that genome's five material numbers, its three term values, and its parent ids. The 384 PST values stay collapsed. `Export genome` downloads that row's JSON only.
 
 Secondary actions: `Export run`, `Import run`, `New run`. `New run` asks for confirmation before clearing the current run.
 

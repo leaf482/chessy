@@ -8,7 +8,7 @@ The project language is English: documentation, UI copy, identifiers, and commit
 
 ## Status
 
-Phase 11 adds Play anchor on Mission. It opens Classic as the opponent and leaves the Darwin, Synapse, or Pilot run in place.
+Phase 12 wires the legal-move count into evaluation. Evolve and Hall show the three term values beside material.
 
 ```bash
 npm install
@@ -47,3 +47,4 @@ npm run dev
 10. Play review
 11. Watch record
 12. Play anchor
+13. Structure terms
